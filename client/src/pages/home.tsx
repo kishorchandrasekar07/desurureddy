@@ -5,6 +5,7 @@ import { useMutation } from "@tanstack/react-query";
 import { Check, Loader2, Send, RotateCcw } from "lucide-react";
 import { insertSubmissionSchema, type InsertSubmission, CATEGORY_OPTIONS } from "@shared/schema";
 import { apiRequest } from "@/lib/queryClient";
+import landingImage from "@assets/image_1766928192688.png";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -77,8 +78,14 @@ export default function Home() {
 
   if (isSubmitted) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center p-4">
-        <Card className="w-full max-w-2xl">
+      <div className="relative min-h-screen w-full overflow-hidden">
+        <div 
+          className="absolute inset-0 bg-cover bg-center bg-no-repeat"
+          style={{ backgroundImage: `url(${landingImage})` }}
+        />
+        <div className="absolute inset-0 bg-black/30" />
+        <div className="relative z-10 flex min-h-screen items-center justify-center p-4">
+        <Card className="w-full max-w-2xl bg-background/95 backdrop-blur-sm">
           <CardContent className="pt-8 pb-8 text-center space-y-6">
             <div className="mx-auto w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center">
               <Check className="w-8 h-8 text-primary" data-testid="icon-success" />
@@ -102,13 +109,20 @@ export default function Home() {
             </Button>
           </CardContent>
         </Card>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-background flex items-center justify-center p-4">
-      <Card className="w-full max-w-2xl">
+    <div className="relative min-h-screen w-full overflow-hidden">
+      <div 
+        className="absolute inset-0 bg-cover bg-center bg-no-repeat"
+        style={{ backgroundImage: `url(${landingImage})` }}
+      />
+      <div className="absolute inset-0 bg-black/30" />
+      <div className="relative z-10 flex min-h-screen items-center justify-center p-4">
+      <Card className="w-full max-w-2xl bg-background/95 backdrop-blur-sm">
         <CardHeader className="space-y-1 pb-6">
           <CardTitle className="text-3xl font-semibold" data-testid="text-form-title">
             Submit Your Information
@@ -298,6 +312,7 @@ export default function Home() {
           </Form>
         </CardContent>
       </Card>
+      </div>
     </div>
   );
 }
