@@ -15,7 +15,32 @@ import {
   EyeOff,
 } from "lucide-react";
 import type { GroupedSubmissions, Submission } from "@shared/schema";
-import { apiRequest, queryClient } from "@/lib/queryClient";
+import { queryClient } from "@/lib/queryClient";
+
+const ADMIN_TOKEN_KEY = "admin_token";
+
+function getAdminToken(): string | null {
+  return localStorage.getItem(ADMIN_TOKEN_KEY);
+}
+
+function setAdminToken(token: string): void {
+  localStorage.setItem(ADMIN_TOKEN_KEY, token);
+}
+
+function clearAdminToken(): void {
+  localStorage.removeItem(ADMIN_TOKEN_KEY);
+}
+
+async function adminFetch(url: string, options: RequestInit = {}): Promise<Response> {
+  const token = getAdminToken();
+  const headers: HeadersInit = {
+    ...options.headers,
+  };
+  if (token) {
+    (headers as Record<string, string>)["x-admin-token"] = token;
+  }
+  return fetch(url, { ...options, headers });
+}
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -195,10 +220,20 @@ function LoginForm({ onSuccess }: { onSuccess: () => void }) {
 
   const loginMutation = useMutation({
     mutationFn: async (password: string) => {
-      const res = await apiRequest("POST", "/api/admin/login", { password });
+      const res = await fetch("/api/admin/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ password }),
+      });
+      if (!res.ok) {
+        throw new Error("Invalid password");
+      }
       return res.json();
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
+      if (data.token) {
+        setAdminToken(data.token);
+      }
       toast({
         title: "Welcome!",
         description: "Successfully logged in to admin dashboard.",
@@ -289,24 +324,26 @@ export default function Admin() {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
   const { toast } = useToast();
 
-  const { data: authStatus, isLoading: authLoading } = useQuery<{ isAuthenticated: boolean }>({
-    queryKey: ["/api/admin/status"],
-  });
-
   useEffect(() => {
-    if (authStatus !== undefined) {
-      setIsAuthenticated(authStatus.isAuthenticated);
+    const token = getAdminToken();
+    if (token) {
+      adminFetch("/api/admin/status")
+        .then((res) => res.json())
+        .then((data) => setIsAuthenticated(data.isAuthenticated))
+        .catch(() => setIsAuthenticated(false));
+    } else {
+      setIsAuthenticated(false);
     }
-  }, [authStatus]);
+  }, []);
 
   const logoutMutation = useMutation({
     mutationFn: async () => {
-      const res = await apiRequest("POST", "/api/admin/logout", {});
+      const res = await adminFetch("/api/admin/logout", { method: "POST" });
       return res.json();
     },
     onSuccess: () => {
+      clearAdminToken();
       setIsAuthenticated(false);
-      queryClient.invalidateQueries({ queryKey: ["/api/admin/status"] });
       queryClient.invalidateQueries({ queryKey: ["/api/submissions/grouped"] });
       toast({
         title: "Logged out",
@@ -321,10 +358,15 @@ export default function Admin() {
     error,
   } = useQuery<GroupedSubmissions[]>({
     queryKey: ["/api/submissions/grouped"],
+    queryFn: async () => {
+      const res = await adminFetch("/api/submissions/grouped");
+      if (!res.ok) throw new Error("Failed to fetch");
+      return res.json();
+    },
     enabled: isAuthenticated === true,
   });
 
-  if (authLoading || isAuthenticated === null) {
+  if (isAuthenticated === null) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <Loader2 className="w-8 h-8 animate-spin text-primary" />

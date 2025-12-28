@@ -3,9 +3,13 @@ import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { insertSubmissionSchema } from "@shared/schema";
 import { fromError } from "zod-validation-error";
+import crypto from "crypto";
+
+const adminTokens = new Set<string>();
 
 const isAdminAuthenticated: RequestHandler = (req, res, next) => {
-  if (req.session && (req.session as any).isAdminAuthenticated) {
+  const token = req.headers["x-admin-token"] as string;
+  if (token && adminTokens.has(token)) {
     return next();
   }
   return res.status(401).json({ message: "Unauthorized" });
@@ -25,28 +29,27 @@ export async function registerRoutes(
     }
     
     if (password === adminPassword) {
-      (req.session as any).isAdminAuthenticated = true;
-      req.session.save((err) => {
-        if (err) {
-          console.error("Session save error:", err);
-          return res.status(500).json({ message: "Session error" });
-        }
-        return res.json({ success: true });
-      });
-    } else {
-      return res.status(401).json({ message: "Invalid password" });
+      const token = crypto.randomBytes(32).toString("hex");
+      adminTokens.add(token);
+      return res.json({ success: true, token });
     }
+    
+    return res.status(401).json({ message: "Invalid password" });
   });
 
   // Admin logout
   app.post("/api/admin/logout", (req, res) => {
-    (req.session as any).isAdminAuthenticated = false;
+    const token = req.headers["x-admin-token"] as string;
+    if (token) {
+      adminTokens.delete(token);
+    }
     return res.json({ success: true });
   });
 
   // Check admin auth status
   app.get("/api/admin/status", (req, res) => {
-    const isAuthenticated = !!(req.session && (req.session as any).isAdminAuthenticated);
+    const token = req.headers["x-admin-token"] as string;
+    const isAuthenticated = !!(token && adminTokens.has(token));
     return res.json({ isAuthenticated });
   });
 
