@@ -1,6 +1,5 @@
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useState, useEffect, useMemo } from "react";
-import { format } from "date-fns";
 import {
   ChevronDown,
   ChevronUp,
@@ -16,6 +15,7 @@ import {
   Search,
   Filter,
   X,
+  Check,
 } from "lucide-react";
 import type { GroupedSubmissions, Submission } from "@shared/schema";
 import { queryClient } from "@/lib/queryClient";
@@ -64,14 +64,80 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
+
+function MultiSelect({
+  label,
+  options,
+  selected,
+  onChange,
+  testId,
+}: {
+  label: string;
+  options: string[];
+  selected: string[];
+  onChange: (selected: string[]) => void;
+  testId: string;
+}) {
+  const toggleOption = (option: string) => {
+    if (selected.includes(option)) {
+      onChange(selected.filter((s) => s !== option));
+    } else {
+      onChange([...selected, option]);
+    }
+  };
+
+  const selectAll = () => onChange([...options]);
+  const clearAll = () => onChange([]);
+
+  return (
+    <Popover>
+      <PopoverTrigger asChild>
+        <Button
+          variant="outline"
+          className="w-full justify-between"
+          data-testid={testId}
+        >
+          <span className="truncate">
+            {selected.length === 0
+              ? `All ${label}`
+              : selected.length === 1
+              ? selected[0]
+              : `${selected.length} selected`}
+          </span>
+          <ChevronDown className="w-4 h-4 shrink-0 opacity-50" />
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent className="w-64 p-0" align="start">
+        <div className="flex items-center justify-between gap-2 p-2 border-b">
+          <Button variant="ghost" size="sm" onClick={selectAll} className="text-xs">
+            Select All
+          </Button>
+          <Button variant="ghost" size="sm" onClick={clearAll} className="text-xs">
+            Clear
+          </Button>
+        </div>
+        <div className="max-h-60 overflow-y-auto p-2 space-y-1">
+          {options.map((option) => (
+            <div
+              key={option}
+              className="flex items-center gap-2 p-2 rounded-md hover-elevate cursor-pointer"
+              onClick={() => toggleOption(option)}
+            >
+              <Checkbox
+                checked={selected.includes(option)}
+                onCheckedChange={() => toggleOption(option)}
+              />
+              <span className="text-sm truncate">{option}</span>
+            </div>
+          ))}
+        </div>
+      </PopoverContent>
+    </Popover>
+  );
+}
 
 function StatCard({
   title,
@@ -145,7 +211,6 @@ function SubmissionGroup({ group }: { group: GroupedSubmissions }) {
                       {group.lineage === "Other" && (
                         <TableHead className="text-xs font-medium uppercase tracking-wide">Details</TableHead>
                       )}
-                      <TableHead className="text-xs font-medium uppercase tracking-wide">Date</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -168,11 +233,6 @@ function SubmissionGroup({ group }: { group: GroupedSubmissions }) {
                             {submission.otherLineage || "-"}
                           </TableCell>
                         )}
-                        <TableCell className="text-muted-foreground" data-testid={`cell-date-${submission.id}`}>
-                          {submission.createdAt
-                            ? format(new Date(submission.createdAt), "MMM d, yyyy")
-                            : "-"}
-                        </TableCell>
                       </TableRow>
                     ))}
                   </TableBody>
@@ -333,9 +393,9 @@ function LoginForm({ onSuccess }: { onSuccess: () => void }) {
 export default function Admin() {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
   const [searchName, setSearchName] = useState("");
-  const [filterLineage, setFilterLineage] = useState<string>("all");
-  const [filterState, setFilterState] = useState<string>("all");
-  const [filterCountry, setFilterCountry] = useState<string>("all");
+  const [filterLineages, setFilterLineages] = useState<string[]>([]);
+  const [filterStates, setFilterStates] = useState<string[]>([]);
+  const [filterCountries, setFilterCountries] = useState<string[]>([]);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -406,14 +466,14 @@ export default function Admin() {
     if (!groupedData) return [];
     
     return groupedData
-      .filter((group) => filterLineage === "all" || group.lineage === filterLineage)
+      .filter((group) => filterLineages.length === 0 || filterLineages.includes(group.lineage))
       .map((group) => ({
         ...group,
         submissions: group.submissions.filter((sub) => {
           const matchesName = searchName === "" || 
             sub.name.toLowerCase().includes(searchName.toLowerCase());
-          const matchesState = filterState === "all" || sub.state === filterState;
-          const matchesCountry = filterCountry === "all" || sub.county === filterCountry;
+          const matchesState = filterStates.length === 0 || filterStates.includes(sub.state);
+          const matchesCountry = filterCountries.length === 0 || filterCountries.includes(sub.county);
           return matchesName && matchesState && matchesCountry;
         }),
       }))
@@ -422,16 +482,16 @@ export default function Admin() {
         count: group.submissions.length,
       }))
       .filter((group) => group.submissions.length > 0);
-  }, [groupedData, searchName, filterLineage, filterState, filterCountry]);
+  }, [groupedData, searchName, filterLineages, filterStates, filterCountries]);
 
-  const hasActiveFilters = searchName !== "" || filterLineage !== "all" || 
-    filterState !== "all" || filterCountry !== "all";
+  const hasActiveFilters = searchName !== "" || filterLineages.length > 0 || 
+    filterStates.length > 0 || filterCountries.length > 0;
 
   const clearFilters = () => {
     setSearchName("");
-    setFilterLineage("all");
-    setFilterState("all");
-    setFilterCountry("all");
+    setFilterLineages([]);
+    setFilterStates([]);
+    setFilterCountries([]);
   };
 
   if (isAuthenticated === null) {
@@ -555,53 +615,35 @@ export default function Admin() {
                   
                   <div className="space-y-2">
                     <Label>Lineage</Label>
-                    <Select value={filterLineage} onValueChange={setFilterLineage}>
-                      <SelectTrigger data-testid="select-filter-lineage">
-                        <SelectValue placeholder="All Lineages" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="all">All Lineages</SelectItem>
-                        {filterOptions.lineages.map((lineage) => (
-                          <SelectItem key={lineage} value={lineage}>
-                            {lineage}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                    <MultiSelect
+                      label="Lineages"
+                      options={filterOptions.lineages}
+                      selected={filterLineages}
+                      onChange={setFilterLineages}
+                      testId="select-filter-lineage"
+                    />
                   </div>
                   
                   <div className="space-y-2">
                     <Label>State</Label>
-                    <Select value={filterState} onValueChange={setFilterState}>
-                      <SelectTrigger data-testid="select-filter-state">
-                        <SelectValue placeholder="All States" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="all">All States</SelectItem>
-                        {filterOptions.states.map((state) => (
-                          <SelectItem key={state} value={state}>
-                            {state}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                    <MultiSelect
+                      label="States"
+                      options={filterOptions.states}
+                      selected={filterStates}
+                      onChange={setFilterStates}
+                      testId="select-filter-state"
+                    />
                   </div>
                   
                   <div className="space-y-2">
                     <Label>Country</Label>
-                    <Select value={filterCountry} onValueChange={setFilterCountry}>
-                      <SelectTrigger data-testid="select-filter-country">
-                        <SelectValue placeholder="All Countries" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="all">All Countries</SelectItem>
-                        {filterOptions.countries.map((country) => (
-                          <SelectItem key={country} value={country}>
-                            {country}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                    <MultiSelect
+                      label="Countries"
+                      options={filterOptions.countries}
+                      selected={filterCountries}
+                      onChange={setFilterCountries}
+                      testId="select-filter-country"
+                    />
                   </div>
                 </div>
               </CardContent>
