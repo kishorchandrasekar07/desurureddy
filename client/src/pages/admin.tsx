@@ -332,6 +332,10 @@ function LoginForm({ onSuccess }: { onSuccess: () => void }) {
 
 export default function Admin() {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
+  const [searchName, setSearchName] = useState("");
+  const [filterLineage, setFilterLineage] = useState<string>("all");
+  const [filterState, setFilterState] = useState<string>("all");
+  const [filterCountry, setFilterCountry] = useState<string>("all");
   const { toast } = useToast();
 
   useEffect(() => {
@@ -376,6 +380,60 @@ export default function Admin() {
     enabled: isAuthenticated === true,
   });
 
+  const filterOptions = useMemo(() => {
+    if (!groupedData) return { lineages: [], states: [], countries: [] };
+    
+    const lineages = new Set<string>();
+    const states = new Set<string>();
+    const countries = new Set<string>();
+    
+    groupedData.forEach((group) => {
+      lineages.add(group.lineage);
+      group.submissions.forEach((sub) => {
+        if (sub.state) states.add(sub.state);
+        if (sub.county) countries.add(sub.county);
+      });
+    });
+    
+    return {
+      lineages: Array.from(lineages).sort(),
+      states: Array.from(states).sort(),
+      countries: Array.from(countries).sort(),
+    };
+  }, [groupedData]);
+
+  const filteredData = useMemo(() => {
+    if (!groupedData) return [];
+    
+    return groupedData
+      .filter((group) => filterLineage === "all" || group.lineage === filterLineage)
+      .map((group) => ({
+        ...group,
+        submissions: group.submissions.filter((sub) => {
+          const matchesName = searchName === "" || 
+            sub.name.toLowerCase().includes(searchName.toLowerCase());
+          const matchesState = filterState === "all" || sub.state === filterState;
+          const matchesCountry = filterCountry === "all" || sub.county === filterCountry;
+          return matchesName && matchesState && matchesCountry;
+        }),
+      }))
+      .map((group) => ({
+        ...group,
+        count: group.submissions.length,
+      }))
+      .filter((group) => group.submissions.length > 0);
+  }, [groupedData, searchName, filterLineage, filterState, filterCountry]);
+
+  const hasActiveFilters = searchName !== "" || filterLineage !== "all" || 
+    filterState !== "all" || filterCountry !== "all";
+
+  const clearFilters = () => {
+    setSearchName("");
+    setFilterLineage("all");
+    setFilterState("all");
+    setFilterCountry("all");
+  };
+
   if (isAuthenticated === null) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
@@ -398,6 +456,7 @@ export default function Admin() {
   const totalSubmissions =
     groupedData?.reduce((acc, group) => acc + group.count, 0) || 0;
   const totalLineages = groupedData?.length || 0;
+  const filteredSubmissions = filteredData.reduce((acc, group) => acc + group.count, 0);
 
   return (
     <div className="min-h-screen bg-background">
@@ -440,7 +499,7 @@ export default function Admin() {
           </Card>
         ) : (
           <div className="space-y-6">
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               <StatCard
                 title="Total Submissions"
                 value={totalSubmissions}
@@ -456,29 +515,135 @@ export default function Admin() {
                 value="Desuru Reddy"
                 icon={Users}
               />
-              <StatCard
-                title="Status"
-                value="Active"
-                icon={AlertCircle}
-              />
             </div>
 
+            <Card>
+              <CardHeader className="pb-4">
+                <div className="flex items-center gap-2">
+                  <Filter className="w-5 h-5 text-muted-foreground" />
+                  <CardTitle className="text-lg">Filters</CardTitle>
+                  {hasActiveFilters && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={clearFilters}
+                      className="ml-auto gap-1"
+                      data-testid="button-clear-filters"
+                    >
+                      <X className="w-4 h-4" />
+                      Clear
+                    </Button>
+                  )}
+                </div>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="search-name">Search by Name</Label>
+                    <div className="relative">
+                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                      <Input
+                        id="search-name"
+                        placeholder="Enter name..."
+                        value={searchName}
+                        onChange={(e) => setSearchName(e.target.value)}
+                        className="pl-9"
+                        data-testid="input-search-name"
+                      />
+                    </div>
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label>Lineage</Label>
+                    <Select value={filterLineage} onValueChange={setFilterLineage}>
+                      <SelectTrigger data-testid="select-filter-lineage">
+                        <SelectValue placeholder="All Lineages" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">All Lineages</SelectItem>
+                        {filterOptions.lineages.map((lineage) => (
+                          <SelectItem key={lineage} value={lineage}>
+                            {lineage}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label>State</Label>
+                    <Select value={filterState} onValueChange={setFilterState}>
+                      <SelectTrigger data-testid="select-filter-state">
+                        <SelectValue placeholder="All States" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">All States</SelectItem>
+                        {filterOptions.states.map((state) => (
+                          <SelectItem key={state} value={state}>
+                            {state}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label>Country</Label>
+                    <Select value={filterCountry} onValueChange={setFilterCountry}>
+                      <SelectTrigger data-testid="select-filter-country">
+                        <SelectValue placeholder="All Countries" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">All Countries</SelectItem>
+                        {filterOptions.countries.map((country) => (
+                          <SelectItem key={country} value={country}>
+                            {country}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
             <div className="space-y-4">
-              <h2 className="text-xl font-semibold" data-testid="text-section-submissions">
-                Submissions by Lineage
-              </h2>
-              {groupedData && groupedData.length > 0 ? (
-                groupedData.map((group) => (
+              <div className="flex items-center justify-between gap-4 flex-wrap">
+                <h2 className="text-xl font-semibold" data-testid="text-section-submissions">
+                  Submissions by Lineage
+                </h2>
+                {hasActiveFilters && (
+                  <Badge variant="secondary" data-testid="badge-filtered-count">
+                    Showing {filteredSubmissions} of {totalSubmissions}
+                  </Badge>
+                )}
+              </div>
+              {filteredData.length > 0 ? (
+                filteredData.map((group) => (
                   <SubmissionGroup key={group.lineage} group={group} />
                 ))
               ) : (
                 <Card>
                   <CardContent className="flex flex-col items-center justify-center py-12 text-center">
                     <FileText className="w-12 h-12 text-muted-foreground/50 mb-4" />
-                    <h3 className="text-lg font-semibold mb-2">No Submissions Yet</h3>
+                    <h3 className="text-lg font-semibold mb-2">
+                      {hasActiveFilters ? "No Matching Results" : "No Submissions Yet"}
+                    </h3>
                     <p className="text-muted-foreground">
-                      Submissions will appear here once users start submitting their information.
+                      {hasActiveFilters 
+                        ? "Try adjusting your filters to see more results."
+                        : "Submissions will appear here once users start submitting their information."}
                     </p>
+                    {hasActiveFilters && (
+                      <Button
+                        variant="outline"
+                        onClick={clearFilters}
+                        className="mt-4"
+                        data-testid="button-clear-filters-empty"
+                      >
+                        Clear Filters
+                      </Button>
+                    )}
                   </CardContent>
                 </Card>
               )}
