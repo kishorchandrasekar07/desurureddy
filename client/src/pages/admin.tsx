@@ -1,6 +1,5 @@
-import { useQuery } from "@tanstack/react-query";
-import { useAuth } from "@/hooks/use-auth";
-import { useEffect } from "react";
+import { useQuery, useMutation } from "@tanstack/react-query";
+import { useState, useEffect } from "react";
 import { format } from "date-fns";
 import {
   ChevronDown,
@@ -11,15 +10,19 @@ import {
   Loader2,
   FileText,
   AlertCircle,
+  Lock,
+  Eye,
+  EyeOff,
 } from "lucide-react";
-import { useState } from "react";
 import type { GroupedSubmissions, Submission } from "@shared/schema";
+import { apiRequest, queryClient } from "@/lib/queryClient";
 
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import {
   Table,
   TableBody,
@@ -34,7 +37,6 @@ import {
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
 import { useToast } from "@/hooks/use-toast";
-import { isUnauthorizedError } from "@/lib/auth-utils";
 
 function StatCard({
   title,
@@ -186,22 +188,132 @@ function LoadingSkeleton() {
   );
 }
 
-export default function Admin() {
-  const { user, isLoading: authLoading, logout, isAuthenticated } = useAuth();
+function LoginForm({ onSuccess }: { onSuccess: () => void }) {
+  const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const { toast } = useToast();
 
-  useEffect(() => {
-    if (!authLoading && !isAuthenticated) {
+  const loginMutation = useMutation({
+    mutationFn: async (password: string) => {
+      const res = await apiRequest("POST", "/api/admin/login", { password });
+      return res.json();
+    },
+    onSuccess: () => {
       toast({
-        title: "Unauthorized",
-        description: "Please log in to access the admin dashboard.",
+        title: "Welcome!",
+        description: "Successfully logged in to admin dashboard.",
+      });
+      onSuccess();
+    },
+    onError: () => {
+      toast({
+        title: "Invalid Password",
+        description: "Please check your password and try again.",
         variant: "destructive",
       });
-      setTimeout(() => {
-        window.location.href = "/api/login";
-      }, 500);
+    },
+  });
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (password.trim()) {
+      loginMutation.mutate(password);
     }
-  }, [authLoading, isAuthenticated, toast]);
+  };
+
+  return (
+    <div className="min-h-screen bg-background flex items-center justify-center p-4">
+      <Card className="w-full max-w-md">
+        <CardHeader className="text-center">
+          <div className="mx-auto w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center mb-4">
+            <Lock className="w-6 h-6 text-primary" />
+          </div>
+          <CardTitle className="text-2xl">Admin Login</CardTitle>
+          <CardDescription>
+            Enter the admin password to access the dashboard
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="password">Password</Label>
+              <div className="relative">
+                <Input
+                  id="password"
+                  type={showPassword ? "text" : "password"}
+                  placeholder="Enter admin password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  data-testid="input-admin-password"
+                  className="pr-10"
+                />
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  className="absolute right-0 top-0 h-full px-3"
+                  onClick={() => setShowPassword(!showPassword)}
+                  data-testid="button-toggle-password"
+                >
+                  {showPassword ? (
+                    <EyeOff className="w-4 h-4" />
+                  ) : (
+                    <Eye className="w-4 h-4" />
+                  )}
+                </Button>
+              </div>
+            </div>
+            <Button
+              type="submit"
+              className="w-full"
+              disabled={loginMutation.isPending || !password.trim()}
+              data-testid="button-login"
+            >
+              {loginMutation.isPending ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Logging in...
+                </>
+              ) : (
+                "Login"
+              )}
+            </Button>
+          </form>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+
+export default function Admin() {
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
+  const { toast } = useToast();
+
+  const { data: authStatus, isLoading: authLoading } = useQuery<{ isAuthenticated: boolean }>({
+    queryKey: ["/api/admin/status"],
+  });
+
+  useEffect(() => {
+    if (authStatus !== undefined) {
+      setIsAuthenticated(authStatus.isAuthenticated);
+    }
+  }, [authStatus]);
+
+  const logoutMutation = useMutation({
+    mutationFn: async () => {
+      const res = await apiRequest("POST", "/api/admin/logout", {});
+      return res.json();
+    },
+    onSuccess: () => {
+      setIsAuthenticated(false);
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/status"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/submissions/grouped"] });
+      toast({
+        title: "Logged out",
+        description: "You have been logged out successfully.",
+      });
+    },
+  });
 
   const {
     data: groupedData,
@@ -209,23 +321,10 @@ export default function Admin() {
     error,
   } = useQuery<GroupedSubmissions[]>({
     queryKey: ["/api/submissions/grouped"],
-    enabled: isAuthenticated,
+    enabled: isAuthenticated === true,
   });
 
-  useEffect(() => {
-    if (error && isUnauthorizedError(error as Error)) {
-      toast({
-        title: "Session Expired",
-        description: "Logging in again...",
-        variant: "destructive",
-      });
-      setTimeout(() => {
-        window.location.href = "/api/login";
-      }, 500);
-    }
-  }, [error, toast]);
-
-  if (authLoading) {
+  if (authLoading || isAuthenticated === null) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <Loader2 className="w-8 h-8 animate-spin text-primary" />
@@ -234,7 +333,14 @@ export default function Admin() {
   }
 
   if (!isAuthenticated) {
-    return null;
+    return (
+      <LoginForm
+        onSuccess={() => {
+          setIsAuthenticated(true);
+          queryClient.invalidateQueries({ queryKey: ["/api/admin/status"] });
+        }}
+      />
+    );
   }
 
   const totalSubmissions =
@@ -252,31 +358,17 @@ export default function Admin() {
                 Admin Dashboard
               </h1>
             </div>
-            <div className="flex items-center gap-4">
-              {user && (
-                <div className="flex items-center gap-3">
-                  <Avatar className="h-8 w-8">
-                    <AvatarImage src={user.profileImageUrl || undefined} alt={user.firstName || "User"} />
-                    <AvatarFallback>
-                      {user.firstName?.[0] || user.email?.[0] || "U"}
-                    </AvatarFallback>
-                  </Avatar>
-                  <span className="text-sm font-medium hidden sm:inline" data-testid="text-user-name">
-                    {user.firstName || user.email}
-                  </span>
-                </div>
-              )}
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => logout()}
-                className="gap-2"
-                data-testid="button-logout"
-              >
-                <LogOut className="w-4 h-4" />
-                <span className="hidden sm:inline">Logout</span>
-              </Button>
-            </div>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => logoutMutation.mutate()}
+              className="gap-2"
+              disabled={logoutMutation.isPending}
+              data-testid="button-logout"
+            >
+              <LogOut className="w-4 h-4" />
+              <span className="hidden sm:inline">Logout</span>
+            </Button>
           </div>
         </div>
       </header>
@@ -284,7 +376,7 @@ export default function Admin() {
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {dataLoading ? (
           <LoadingSkeleton />
-        ) : error && !isUnauthorizedError(error as Error) ? (
+        ) : error ? (
           <Card>
             <CardContent className="flex flex-col items-center justify-center py-12 text-center">
               <AlertCircle className="w-12 h-12 text-destructive mb-4" />
