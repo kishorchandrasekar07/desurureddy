@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation } from "@tanstack/react-query";
-import { Check, Loader2, Send, RotateCcw } from "lucide-react";
+import { Check, Loader2, Send, RotateCcw, ChevronsUpDown } from "lucide-react";
 import { insertSubmissionSchema, type InsertSubmission, LINEAGE_OPTIONS } from "@shared/schema";
 import { apiRequest } from "@/lib/queryClient";
 import landingImage from "@assets/image_1766928192688.png";
@@ -12,12 +12,19 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { cn } from "@/lib/utils";
 import {
   Form,
   FormControl,
@@ -30,6 +37,7 @@ import { useToast } from "@/hooks/use-toast";
 
 export default function Home() {
   const [isSubmitted, setIsSubmitted] = useState(false);
+  const [lineageOpen, setLineageOpen] = useState(false);
   const { toast } = useToast();
 
   const form = useForm<InsertSubmission>({
@@ -199,28 +207,58 @@ export default function Home() {
                 control={form.control}
                 name="lineage"
                 render={({ field }) => (
-                  <FormItem>
+                  <FormItem className="flex flex-col">
                     <FormLabel>
                       Lineage (Vaaru) <span className="text-destructive">*</span>
                     </FormLabel>
-                    <Select onValueChange={field.onChange} value={field.value}>
-                      <FormControl>
-                        <SelectTrigger data-testid="select-lineage">
-                          <SelectValue placeholder="Select your lineage" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent className="max-h-[300px]">
-                        {LINEAGE_OPTIONS.map((option) => (
-                          <SelectItem
-                            key={option}
-                            value={option}
-                            data-testid={`option-lineage-${option.toLowerCase().replace(/\s+/g, "-")}`}
+                    <Popover open={lineageOpen} onOpenChange={setLineageOpen}>
+                      <PopoverTrigger asChild>
+                        <FormControl>
+                          <Button
+                            variant="outline"
+                            role="combobox"
+                            aria-expanded={lineageOpen}
+                            className={cn(
+                              "w-full justify-between font-normal",
+                              !field.value && "text-muted-foreground"
+                            )}
+                            data-testid="select-lineage"
                           >
-                            {option}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                            {field.value || "Search and select your lineage"}
+                            <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                          </Button>
+                        </FormControl>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-full p-0" align="start">
+                        <Command>
+                          <CommandInput placeholder="Search lineage..." />
+                          <CommandList>
+                            <CommandEmpty>No lineage found.</CommandEmpty>
+                            <CommandGroup>
+                              {LINEAGE_OPTIONS.map((option) => (
+                                <CommandItem
+                                  key={option}
+                                  value={option}
+                                  onSelect={() => {
+                                    field.onChange(option);
+                                    setLineageOpen(false);
+                                  }}
+                                  data-testid={`option-lineage-${option.toLowerCase().replace(/\s+/g, "-")}`}
+                                >
+                                  <Check
+                                    className={cn(
+                                      "mr-2 h-4 w-4",
+                                      field.value === option ? "opacity-100" : "opacity-0"
+                                    )}
+                                  />
+                                  {option}
+                                </CommandItem>
+                              ))}
+                            </CommandGroup>
+                          </CommandList>
+                        </Command>
+                      </PopoverContent>
+                    </Popover>
                     <FormMessage />
                   </FormItem>
                 )}
