@@ -26,10 +26,16 @@ export async function registerRoutes(
     
     if (password === adminPassword) {
       (req.session as any).isAdminAuthenticated = true;
-      return res.json({ success: true });
+      req.session.save((err) => {
+        if (err) {
+          console.error("Session save error:", err);
+          return res.status(500).json({ message: "Session error" });
+        }
+        return res.json({ success: true });
+      });
+    } else {
+      return res.status(401).json({ message: "Invalid password" });
     }
-    
-    return res.status(401).json({ message: "Invalid password" });
   });
 
   // Admin logout
