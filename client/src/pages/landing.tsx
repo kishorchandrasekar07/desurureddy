@@ -17,14 +17,16 @@ export default function Landing() {
       
       <div className="relative z-10 flex min-h-screen flex-col items-center justify-between px-4 py-8 sm:py-12 md:py-16">
         <div className="w-full max-w-4xl text-center">
-          <h1 
-            className="text-2xl font-bold text-white drop-shadow-lg sm:text-3xl md:text-4xl lg:text-5xl"
+          <div 
+            className="flex flex-col items-center gap-1 text-2xl font-bold text-white drop-shadow-lg sm:text-3xl md:text-4xl lg:text-5xl"
             data-testid="text-greeting"
           >
-            வணக்கம் నమస్తే Hello
-          </h1>
+            <span>வணக்கம்</span>
+            <span>నమస్తే</span>
+            <span>Hello</span>
+          </div>
           <h2 
-            className="mt-2 text-xl font-semibold text-white drop-shadow-lg sm:text-2xl md:text-3xl lg:text-4xl"
+            className="mt-3 text-xl font-semibold text-white drop-shadow-lg sm:mt-4 sm:text-2xl md:text-3xl lg:text-4xl"
             data-testid="text-community"
           >
             Desuru Reddy's Community
