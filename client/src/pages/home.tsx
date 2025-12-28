@@ -3,7 +3,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation } from "@tanstack/react-query";
 import { Check, Loader2, Send, RotateCcw } from "lucide-react";
-import { insertSubmissionSchema, type InsertSubmission, CATEGORY_OPTIONS } from "@shared/schema";
+import { insertSubmissionSchema, type InsertSubmission, LINEAGE_OPTIONS } from "@shared/schema";
 import { apiRequest } from "@/lib/queryClient";
 import landingImage from "@assets/image_1766928192688.png";
 
@@ -37,15 +37,15 @@ export default function Home() {
     defaultValues: {
       name: "",
       phoneNumber: "",
-      assignedTo: "Desuru Reddy",
-      category: "",
-      otherCategory: "",
+      community: "Desuru Reddy",
+      lineage: "",
+      otherLineage: "",
       state: "",
       county: "",
     },
   });
 
-  const selectedCategory = form.watch("category");
+  const selectedLineage = form.watch("lineage");
 
   const submitMutation = useMutation({
     mutationFn: async (data: InsertSubmission) => {
@@ -65,8 +65,8 @@ export default function Home() {
   });
 
   const onSubmit = (data: InsertSubmission) => {
-    if (data.category !== "Other") {
-      data.otherCategory = undefined;
+    if (data.lineage !== "Other") {
+      data.otherLineage = undefined;
     }
     submitMutation.mutate(data);
   };
@@ -177,18 +177,18 @@ export default function Home() {
 
               <FormField
                 control={form.control}
-                name="assignedTo"
+                name="community"
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                      Assigned To
+                      Community
                     </FormLabel>
                     <FormControl>
                       <Input
                         {...field}
                         disabled
                         className="bg-muted cursor-not-allowed"
-                        data-testid="input-assigned-to"
+                        data-testid="input-community"
                       />
                     </FormControl>
                   </FormItem>
@@ -197,24 +197,24 @@ export default function Home() {
 
               <FormField
                 control={form.control}
-                name="category"
+                name="lineage"
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>
-                      Category <span className="text-destructive">*</span>
+                      Lineage (Vaaru) <span className="text-destructive">*</span>
                     </FormLabel>
                     <Select onValueChange={field.onChange} value={field.value}>
                       <FormControl>
-                        <SelectTrigger data-testid="select-category">
-                          <SelectValue placeholder="Select a category" />
+                        <SelectTrigger data-testid="select-lineage">
+                          <SelectValue placeholder="Select your lineage" />
                         </SelectTrigger>
                       </FormControl>
-                      <SelectContent>
-                        {CATEGORY_OPTIONS.map((option) => (
+                      <SelectContent className="max-h-[300px]">
+                        {LINEAGE_OPTIONS.map((option) => (
                           <SelectItem
                             key={option}
                             value={option}
-                            data-testid={`option-category-${option.toLowerCase().replace(/\s+/g, "-")}`}
+                            data-testid={`option-lineage-${option.toLowerCase().replace(/\s+/g, "-")}`}
                           >
                             {option}
                           </SelectItem>
@@ -226,10 +226,10 @@ export default function Home() {
                 )}
               />
 
-              {selectedCategory === "Other" && (
+              {selectedLineage === "Other" && (
                 <FormField
                   control={form.control}
-                  name="otherCategory"
+                  name="otherLineage"
                   render={({ field }) => (
                     <FormItem className="animate-in slide-in-from-top-2 duration-200">
                       <FormLabel>
@@ -237,9 +237,9 @@ export default function Home() {
                       </FormLabel>
                       <FormControl>
                         <Input
-                          placeholder="Enter your category"
+                          placeholder="Enter your lineage"
                           {...field}
-                          data-testid="input-other-category"
+                          data-testid="input-other-lineage"
                         />
                       </FormControl>
                       <FormMessage />

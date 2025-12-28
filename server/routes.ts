@@ -34,10 +34,10 @@ export async function registerRoutes(
     }
   });
 
-  // Get all submissions grouped by category (protected endpoint)
+  // Get all submissions grouped by lineage (protected endpoint)
   app.get("/api/submissions/grouped", isAuthenticated, async (req, res) => {
     try {
-      const grouped = await storage.getSubmissionsGroupedByCategory();
+      const grouped = await storage.getSubmissionsGroupedByLineage();
       return res.json(grouped);
     } catch (error) {
       console.error("Error fetching grouped submissions:", error);

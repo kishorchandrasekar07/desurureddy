@@ -72,14 +72,14 @@ function SubmissionGroup({ group }: { group: GroupedSubmissions }) {
           <CardHeader className="cursor-pointer hover-elevate">
             <div className="flex items-center justify-between gap-4">
               <div className="flex items-center gap-3 flex-wrap">
-                <CardTitle className="text-lg font-semibold" data-testid={`group-title-${group.category.toLowerCase().replace(/\s+/g, "-")}`}>
-                  {group.category}
+                <CardTitle className="text-lg font-semibold" data-testid={`group-title-${group.lineage.toLowerCase().replace(/\s+/g, "-")}`}>
+                  {group.lineage}
                 </CardTitle>
-                <Badge variant="secondary" className="text-xs" data-testid={`badge-count-${group.category.toLowerCase().replace(/\s+/g, "-")}`}>
+                <Badge variant="secondary" className="text-xs" data-testid={`badge-count-${group.lineage.toLowerCase().replace(/\s+/g, "-")}`}>
                   {group.count} {group.count === 1 ? "submission" : "submissions"}
                 </Badge>
               </div>
-              <Button variant="ghost" size="icon" data-testid={`button-toggle-${group.category.toLowerCase().replace(/\s+/g, "-")}`}>
+              <Button variant="ghost" size="icon" data-testid={`button-toggle-${group.lineage.toLowerCase().replace(/\s+/g, "-")}`}>
                 {isOpen ? (
                   <ChevronUp className="w-4 h-4" />
                 ) : (
@@ -105,7 +105,7 @@ function SubmissionGroup({ group }: { group: GroupedSubmissions }) {
                       <TableHead className="text-xs font-medium uppercase tracking-wide">Phone</TableHead>
                       <TableHead className="text-xs font-medium uppercase tracking-wide">State</TableHead>
                       <TableHead className="text-xs font-medium uppercase tracking-wide">County</TableHead>
-                      {group.category === "Other" && (
+                      {group.lineage === "Other" && (
                         <TableHead className="text-xs font-medium uppercase tracking-wide">Details</TableHead>
                       )}
                       <TableHead className="text-xs font-medium uppercase tracking-wide">Date</TableHead>
@@ -126,9 +126,9 @@ function SubmissionGroup({ group }: { group: GroupedSubmissions }) {
                         <TableCell data-testid={`cell-county-${submission.id}`}>
                           {submission.county}
                         </TableCell>
-                        {group.category === "Other" && (
+                        {group.lineage === "Other" && (
                           <TableCell data-testid={`cell-other-${submission.id}`}>
-                            {submission.otherCategory || "-"}
+                            {submission.otherLineage || "-"}
                           </TableCell>
                         )}
                         <TableCell className="text-muted-foreground" data-testid={`cell-date-${submission.id}`}>
@@ -239,7 +239,7 @@ export default function Admin() {
 
   const totalSubmissions =
     groupedData?.reduce((acc, group) => acc + group.count, 0) || 0;
-  const totalCategories = groupedData?.length || 0;
+  const totalLineages = groupedData?.length || 0;
 
   return (
     <div className="min-h-screen bg-background">
@@ -303,12 +303,12 @@ export default function Admin() {
                 icon={FileText}
               />
               <StatCard
-                title="Categories"
-                value={totalCategories}
+                title="Lineages"
+                value={totalLineages}
                 icon={LayoutDashboard}
               />
               <StatCard
-                title="Assigned To"
+                title="Community"
                 value="Desuru Reddy"
                 icon={Users}
               />
@@ -321,11 +321,11 @@ export default function Admin() {
 
             <div className="space-y-4">
               <h2 className="text-xl font-semibold" data-testid="text-section-submissions">
-                Submissions by Category
+                Submissions by Lineage
               </h2>
               {groupedData && groupedData.length > 0 ? (
                 groupedData.map((group) => (
-                  <SubmissionGroup key={group.category} group={group} />
+                  <SubmissionGroup key={group.lineage} group={group} />
                 ))
               ) : (
                 <Card>

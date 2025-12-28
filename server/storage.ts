@@ -11,7 +11,7 @@ import { eq, desc } from "drizzle-orm";
 export interface IStorage {
   createSubmission(submission: InsertSubmission): Promise<Submission>;
   getAllSubmissions(): Promise<Submission[]>;
-  getSubmissionsGroupedByCategory(): Promise<GroupedSubmissions[]>;
+  getSubmissionsGroupedByLineage(): Promise<GroupedSubmissions[]>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -30,20 +30,20 @@ export class DatabaseStorage implements IStorage {
       .orderBy(desc(submissions.createdAt));
   }
 
-  async getSubmissionsGroupedByCategory(): Promise<GroupedSubmissions[]> {
+  async getSubmissionsGroupedByLineage(): Promise<GroupedSubmissions[]> {
     const allSubmissions = await this.getAllSubmissions();
     
     const grouped = allSubmissions.reduce((acc, submission) => {
-      const category = submission.category;
-      if (!acc[category]) {
-        acc[category] = [];
+      const lineage = submission.lineage;
+      if (!acc[lineage]) {
+        acc[lineage] = [];
       }
-      acc[category].push(submission);
+      acc[lineage].push(submission);
       return acc;
     }, {} as Record<string, Submission[]>);
 
-    return Object.entries(grouped).map(([category, items]) => ({
-      category,
+    return Object.entries(grouped).map(([lineage, items]) => ({
+      lineage,
       submissions: items,
       count: items.length,
     }));
