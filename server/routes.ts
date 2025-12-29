@@ -96,5 +96,36 @@ export async function registerRoutes(
     }
   });
 
+  // Get pending submissions (protected endpoint)
+  app.get("/api/submissions/pending", isAdminAuthenticated, async (req, res) => {
+    try {
+      const pending = await storage.getPendingSubmissions();
+      return res.json(pending);
+    } catch (error) {
+      console.error("Error fetching pending submissions:", error);
+      return res.status(500).json({ message: "Failed to fetch pending submissions" });
+    }
+  });
+
+  // Approve a submission (protected endpoint)
+  app.post("/api/submissions/:id/approve", isAdminAuthenticated, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id, 10);
+      if (isNaN(id)) {
+        return res.status(400).json({ message: "Invalid submission ID" });
+      }
+      
+      const approved = await storage.approveSubmission(id);
+      if (!approved) {
+        return res.status(404).json({ message: "Submission not found" });
+      }
+      
+      return res.json(approved);
+    } catch (error) {
+      console.error("Error approving submission:", error);
+      return res.status(500).json({ message: "Failed to approve submission" });
+    }
+  });
+
   return httpServer;
 }

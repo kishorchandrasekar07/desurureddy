@@ -16,6 +16,8 @@ import {
   Filter,
   X,
   Check,
+  Clock,
+  CheckCircle,
 } from "lucide-react";
 import type { GroupedSubmissions, Submission } from "@shared/schema";
 import { queryClient } from "@/lib/queryClient";
@@ -67,6 +69,52 @@ import {
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
+
+function PendingApprovalCard({
+  submission,
+  onApprove,
+  isApproving,
+}: {
+  submission: Submission;
+  onApprove: (id: number) => void;
+  isApproving: boolean;
+}) {
+  return (
+    <Card className="border-amber-500/30 bg-amber-50/50 dark:bg-amber-950/20">
+      <CardContent className="p-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div className="space-y-1">
+            <div className="flex items-center gap-2 flex-wrap">
+              <Badge variant="outline" className="bg-amber-100 dark:bg-amber-900/50 text-amber-800 dark:text-amber-200 border-amber-300">
+                <Clock className="w-3 h-3 mr-1" />
+                Pending Approval
+              </Badge>
+              <span className="font-semibold" data-testid={`pending-name-${submission.id}`}>{submission.name}</span>
+            </div>
+            <div className="text-sm text-muted-foreground space-y-1">
+              <p><span className="font-medium">Phone:</span> {submission.phoneNumber}</p>
+              <p><span className="font-medium">Lineage:</span> {submission.lineage} {submission.otherLineage && `(${submission.otherLineage})`}</p>
+              <p><span className="font-medium">Location:</span> {submission.state}, {submission.county}</p>
+            </div>
+          </div>
+          <Button
+            onClick={() => onApprove(submission.id)}
+            disabled={isApproving}
+            className="gap-2 shrink-0"
+            data-testid={`button-approve-${submission.id}`}
+          >
+            {isApproving ? (
+              <Loader2 className="w-4 h-4 animate-spin" />
+            ) : (
+              <CheckCircle className="w-4 h-4" />
+            )}
+            Approve
+          </Button>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
 
 function MultiSelect({
   label,
@@ -440,6 +488,47 @@ export default function Admin() {
     enabled: isAuthenticated === true,
   });
 
+  const {
+    data: pendingData,
+    isLoading: pendingLoading,
+  } = useQuery<Submission[]>({
+    queryKey: ["/api/submissions/pending"],
+    queryFn: async () => {
+      const res = await adminFetch("/api/submissions/pending");
+      if (!res.ok) throw new Error("Failed to fetch");
+      return res.json();
+    },
+    enabled: isAuthenticated === true,
+  });
+
+  const [approvingId, setApprovingId] = useState<number | null>(null);
+
+  const approveMutation = useMutation({
+    mutationFn: async (id: number) => {
+      setApprovingId(id);
+      const res = await adminFetch(`/api/submissions/${id}/approve`, { method: "POST" });
+      if (!res.ok) throw new Error("Failed to approve");
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/submissions/pending"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/submissions/grouped"] });
+      toast({
+        title: "Approved!",
+        description: "Submission has been approved and added to the database.",
+      });
+      setApprovingId(null);
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "Failed to approve submission. Please try again.",
+        variant: "destructive",
+      });
+      setApprovingId(null);
+    },
+  });
+
   const filterOptions = useMemo(() => {
     if (!groupedData) return { lineages: [], states: [], countries: [] };
     
@@ -559,6 +648,33 @@ export default function Admin() {
           </Card>
         ) : (
           <div className="space-y-6">
+            {pendingData && pendingData.length > 0 && (
+              <Card className="border-amber-500/50">
+                <CardHeader className="pb-4">
+                  <div className="flex items-center gap-2">
+                    <Clock className="w-5 h-5 text-amber-500" />
+                    <CardTitle className="text-lg">Pending Approvals</CardTitle>
+                    <Badge variant="secondary" className="bg-amber-100 dark:bg-amber-900/50 text-amber-800 dark:text-amber-200">
+                      {pendingData.length}
+                    </Badge>
+                  </div>
+                  <CardDescription>
+                    These submissions require your approval before being added to the database.
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  {pendingData.map((submission) => (
+                    <PendingApprovalCard
+                      key={submission.id}
+                      submission={submission}
+                      onApprove={(id) => approveMutation.mutate(id)}
+                      isApproving={approvingId === submission.id}
+                    />
+                  ))}
+                </CardContent>
+              </Card>
+            )}
+
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               <StatCard
                 title="Total Submissions"

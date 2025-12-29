@@ -101,12 +101,16 @@ export const submissions = pgTable("submissions", {
   otherLineage: text("other_lineage"),
   state: text("state").notNull(),
   county: text("county").notNull(),
+  status: text("status").notNull().default("approved"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
+  approvedAt: timestamp("approved_at"),
 });
 
 export const insertSubmissionSchema = createInsertSchema(submissions).omit({
   id: true,
   createdAt: true,
+  status: true,
+  approvedAt: true,
 }).extend({
   name: z.string().min(2, "Name must be at least 2 characters"),
   phoneNumber: z.string().min(10, "Phone number must be at least 10 digits"),

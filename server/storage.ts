@@ -11,14 +11,24 @@ import { eq, desc } from "drizzle-orm";
 export interface IStorage {
   createSubmission(submission: InsertSubmission): Promise<Submission>;
   getAllSubmissions(): Promise<Submission[]>;
+  getApprovedSubmissions(): Promise<Submission[]>;
+  getPendingSubmissions(): Promise<Submission[]>;
+  approveSubmission(id: number): Promise<Submission | null>;
   getSubmissionsGroupedByLineage(): Promise<GroupedSubmissions[]>;
 }
 
 export class DatabaseStorage implements IStorage {
   async createSubmission(insertSubmission: InsertSubmission): Promise<Submission> {
+    const status = insertSubmission.lineage === "Other" ? "pending" : "approved";
+    const approvedAt = status === "approved" ? new Date() : null;
+    
     const [submission] = await db
       .insert(submissions)
-      .values(insertSubmission)
+      .values({
+        ...insertSubmission,
+        status,
+        approvedAt,
+      })
       .returning();
     return submission;
   }
@@ -30,10 +40,38 @@ export class DatabaseStorage implements IStorage {
       .orderBy(desc(submissions.createdAt));
   }
 
+  async getApprovedSubmissions(): Promise<Submission[]> {
+    return await db
+      .select()
+      .from(submissions)
+      .where(eq(submissions.status, "approved"))
+      .orderBy(desc(submissions.createdAt));
+  }
+
+  async getPendingSubmissions(): Promise<Submission[]> {
+    return await db
+      .select()
+      .from(submissions)
+      .where(eq(submissions.status, "pending"))
+      .orderBy(desc(submissions.createdAt));
+  }
+
+  async approveSubmission(id: number): Promise<Submission | null> {
+    const [submission] = await db
+      .update(submissions)
+      .set({ 
+        status: "approved",
+        approvedAt: new Date(),
+      })
+      .where(eq(submissions.id, id))
+      .returning();
+    return submission || null;
+  }
+
   async getSubmissionsGroupedByLineage(): Promise<GroupedSubmissions[]> {
-    const allSubmissions = await this.getAllSubmissions();
+    const approvedSubmissions = await this.getApprovedSubmissions();
     
-    const grouped = allSubmissions.reduce((acc, submission) => {
+    const grouped = approvedSubmissions.reduce((acc, submission) => {
       const lineage = submission.lineage;
       if (!acc[lineage]) {
         acc[lineage] = [];
