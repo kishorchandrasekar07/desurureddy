@@ -6,7 +6,7 @@ import {
   submissions 
 } from "@shared/schema";
 import { db } from "./db";
-import { eq, desc } from "drizzle-orm";
+import { eq, asc } from "drizzle-orm";
 
 export interface IStorage {
   createSubmission(submission: InsertSubmission): Promise<Submission>;
@@ -37,7 +37,7 @@ export class DatabaseStorage implements IStorage {
     return await db
       .select()
       .from(submissions)
-      .orderBy(desc(submissions.createdAt));
+      .orderBy(asc(submissions.lineage), asc(submissions.name));
   }
 
   async getApprovedSubmissions(): Promise<Submission[]> {
@@ -45,7 +45,7 @@ export class DatabaseStorage implements IStorage {
       .select()
       .from(submissions)
       .where(eq(submissions.status, "approved"))
-      .orderBy(desc(submissions.createdAt));
+      .orderBy(asc(submissions.lineage), asc(submissions.name));
   }
 
   async getPendingSubmissions(): Promise<Submission[]> {
@@ -53,7 +53,7 @@ export class DatabaseStorage implements IStorage {
       .select()
       .from(submissions)
       .where(eq(submissions.status, "pending"))
-      .orderBy(desc(submissions.createdAt));
+      .orderBy(asc(submissions.lineage), asc(submissions.name));
   }
 
   async approveSubmission(id: number): Promise<Submission | null> {
@@ -80,11 +80,13 @@ export class DatabaseStorage implements IStorage {
       return acc;
     }, {} as Record<string, Submission[]>);
 
-    return Object.entries(grouped).map(([lineage, items]) => ({
-      lineage,
-      submissions: items,
-      count: items.length,
-    }));
+    return Object.entries(grouped)
+      .map(([lineage, items]) => ({
+        lineage,
+        submissions: items,
+        count: items.length,
+      }))
+      .sort((a, b) => a.lineage.localeCompare(b.lineage));
   }
 }
 

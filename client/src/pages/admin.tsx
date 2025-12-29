@@ -21,6 +21,7 @@ import {
 } from "lucide-react";
 import type { GroupedSubmissions, Submission } from "@shared/schema";
 import { queryClient } from "@/lib/queryClient";
+import landingImage from "@assets/image_1766928192688.png";
 
 const ADMIN_TOKEN_KEY = "admin_token";
 
@@ -257,7 +258,7 @@ function SubmissionGroup({ group }: { group: GroupedSubmissions }) {
                       <TableHead className="text-xs font-medium uppercase tracking-wide">State</TableHead>
                       <TableHead className="text-xs font-medium uppercase tracking-wide">County</TableHead>
                       {group.lineage === "Other" && (
-                        <TableHead className="text-xs font-medium uppercase tracking-wide">Details</TableHead>
+                        <TableHead className="text-xs font-medium uppercase tracking-wide">Lineage</TableHead>
                       )}
                     </TableRow>
                   </TableHeader>
@@ -608,7 +609,13 @@ export default function Admin() {
   const filteredSubmissions = filteredData.reduce((acc, group) => acc + group.count, 0);
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="relative min-h-screen w-full overflow-hidden">
+      <div 
+        className="fixed inset-0 bg-cover bg-center bg-no-repeat"
+        style={{ backgroundImage: `url(${landingImage})` }}
+      />
+      <div className="fixed inset-0 bg-black/30" />
+      <div className="relative z-10 min-h-screen">
       <header className="sticky top-0 z-50 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between gap-4 h-16">
@@ -809,6 +816,7 @@ export default function Admin() {
           </div>
         )}
       </main>
+      </div>
     </div>
   );
 }
