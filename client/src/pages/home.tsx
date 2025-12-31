@@ -57,6 +57,7 @@ export default function Home() {
       gender: undefined,
       dateOfBirth: "",
       presentAddress: "",
+      nativePlace: "",
       gothram: "",
       houseName: "",
       otherGothram: "",
@@ -288,6 +289,26 @@ export default function Home() {
                         {...field}
                         rows={3}
                         data-testid="input-address"
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="nativePlace"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>
+                      Native Place <span className="text-destructive">*</span>
+                    </FormLabel>
+                    <FormControl>
+                      <Input
+                        placeholder="Enter your native place"
+                        {...field}
+                        data-testid="input-native-place"
                       />
                     </FormControl>
                     <FormMessage />

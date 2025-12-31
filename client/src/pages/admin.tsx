@@ -100,6 +100,7 @@ function PendingApprovalCard({
               <p><span className="font-medium">Gender:</span> {submission.gender || "N/A"}</p>
               <p><span className="font-medium">Date of Birth:</span> {submission.dateOfBirth ? new Date(submission.dateOfBirth).toLocaleDateString() : "N/A"}</p>
               <p><span className="font-medium">Present Address:</span> {submission.presentAddress || "N/A"}</p>
+              <p><span className="font-medium">Native Place:</span> {submission.nativePlace || "N/A"}</p>
               <p><span className="font-medium">Gothram:</span> {submission.gothram} {submission.otherGothram && `(${submission.otherGothram})`}</p>
               <p><span className="font-medium">House Name:</span> {submission.houseName} {submission.otherHouseName && `(${submission.otherHouseName})`}</p>
               <p><span className="font-medium">Location:</span> {submission.state}, {submission.county}</p>
@@ -265,6 +266,7 @@ function SubmissionGroup({ group }: { group: GroupedSubmissions }) {
                       <TableHead className="text-xs font-medium uppercase tracking-wide">Gender</TableHead>
                       <TableHead className="text-xs font-medium uppercase tracking-wide">DOB</TableHead>
                       <TableHead className="text-xs font-medium uppercase tracking-wide">Present Address</TableHead>
+                      <TableHead className="text-xs font-medium uppercase tracking-wide">Native Place</TableHead>
                       <TableHead className="text-xs font-medium uppercase tracking-wide">House Name</TableHead>
                       <TableHead className="text-xs font-medium uppercase tracking-wide">State</TableHead>
                       <TableHead className="text-xs font-medium uppercase tracking-wide">County</TableHead>
@@ -290,6 +292,9 @@ function SubmissionGroup({ group }: { group: GroupedSubmissions }) {
                         </TableCell>
                         <TableCell data-testid={`cell-address-${submission.id}`} className="max-w-xs truncate" title={submission.presentAddress || ""}>
                           {submission.presentAddress || "N/A"}
+                        </TableCell>
+                        <TableCell data-testid={`cell-native-${submission.id}`}>
+                          {submission.nativePlace || "N/A"}
                         </TableCell>
                         <TableCell data-testid={`cell-housename-${submission.id}`}>
                           {submission.houseName}
@@ -622,7 +627,7 @@ export default function Admin() {
   };
 
   const exportToPDF = () => {
-    const doc = new jsPDF();
+    const doc = new jsPDF({ orientation: "landscape" });
     const dataToExport = hasActiveFilters ? filteredData : groupedData || [];
     
     doc.setFontSize(18);
@@ -644,9 +649,14 @@ export default function Admin() {
         const displayHouseName = sub.houseName === "Other" && sub.otherHouseName 
           ? `Other (${sub.otherHouseName})` 
           : sub.houseName;
+        const displayDOB = sub.dateOfBirth ? new Date(sub.dateOfBirth).toLocaleDateString() : "N/A";
         tableData.push([
           sub.name,
           sub.phoneNumber,
+          sub.gender || "N/A",
+          displayDOB,
+          sub.presentAddress || "N/A",
+          sub.nativePlace || "N/A",
           displayGothram,
           displayHouseName,
           sub.state,
@@ -656,10 +666,10 @@ export default function Admin() {
     });
     
     autoTable(doc, {
-      head: [["Name", "Phone", "Gothram", "House Name", "State", "County"]],
+      head: [["Name", "Phone", "Gender", "DOB", "Address", "Native Place", "Gothram", "House Name", "State", "County"]],
       body: tableData,
       startY: hasActiveFilters ? 42 : 36,
-      styles: { fontSize: 9 },
+      styles: { fontSize: 8 },
       headStyles: { fillColor: [59, 130, 246] },
     });
     
