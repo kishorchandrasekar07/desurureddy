@@ -97,6 +97,9 @@ function PendingApprovalCard({
             </div>
             <div className="text-sm text-muted-foreground space-y-1">
               <p><span className="font-medium">Phone:</span> {submission.phoneNumber}</p>
+              <p><span className="font-medium">Gender:</span> {submission.gender || "N/A"}</p>
+              <p><span className="font-medium">Date of Birth:</span> {submission.dateOfBirth ? new Date(submission.dateOfBirth).toLocaleDateString() : "N/A"}</p>
+              <p><span className="font-medium">Present Address:</span> {submission.presentAddress || "N/A"}</p>
               <p><span className="font-medium">Gothram:</span> {submission.gothram} {submission.otherGothram && `(${submission.otherGothram})`}</p>
               <p><span className="font-medium">House Name:</span> {submission.houseName} {submission.otherHouseName && `(${submission.otherHouseName})`}</p>
               <p><span className="font-medium">Location:</span> {submission.state}, {submission.county}</p>
@@ -259,6 +262,9 @@ function SubmissionGroup({ group }: { group: GroupedSubmissions }) {
                     <TableRow>
                       <TableHead className="text-xs font-medium uppercase tracking-wide">Name</TableHead>
                       <TableHead className="text-xs font-medium uppercase tracking-wide">Phone</TableHead>
+                      <TableHead className="text-xs font-medium uppercase tracking-wide">Gender</TableHead>
+                      <TableHead className="text-xs font-medium uppercase tracking-wide">DOB</TableHead>
+                      <TableHead className="text-xs font-medium uppercase tracking-wide">Present Address</TableHead>
                       <TableHead className="text-xs font-medium uppercase tracking-wide">House Name</TableHead>
                       <TableHead className="text-xs font-medium uppercase tracking-wide">State</TableHead>
                       <TableHead className="text-xs font-medium uppercase tracking-wide">County</TableHead>
@@ -276,8 +282,18 @@ function SubmissionGroup({ group }: { group: GroupedSubmissions }) {
                         <TableCell data-testid={`cell-phone-${submission.id}`}>
                           {submission.phoneNumber}
                         </TableCell>
+                        <TableCell data-testid={`cell-gender-${submission.id}`}>
+                          {submission.gender || "N/A"}
+                        </TableCell>
+                        <TableCell data-testid={`cell-dob-${submission.id}`}>
+                          {submission.dateOfBirth ? new Date(submission.dateOfBirth).toLocaleDateString() : "N/A"}
+                        </TableCell>
+                        <TableCell data-testid={`cell-address-${submission.id}`} className="max-w-xs truncate" title={submission.presentAddress || ""}>
+                          {submission.presentAddress || "N/A"}
+                        </TableCell>
                         <TableCell data-testid={`cell-housename-${submission.id}`}>
                           {submission.houseName}
+                          {submission.houseName === "Other" && submission.otherHouseName && ` (${submission.otherHouseName})`}
                         </TableCell>
                         <TableCell data-testid={`cell-state-${submission.id}`}>
                           {submission.state}
