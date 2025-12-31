@@ -850,7 +850,7 @@ export default function Admin() {
 
             <div className="space-y-4">
               <div className="flex items-center justify-between gap-4 flex-wrap">
-                <h2 className="text-xl font-semibold" data-testid="text-section-submissions">
+                <h2 className="text-xl font-semibold text-white" data-testid="text-section-submissions">
                   Submissions by Gothram
                 </h2>
                 <div className="flex items-center gap-2 flex-wrap">
