@@ -453,6 +453,7 @@ export default function Admin() {
   const [searchName, setSearchName] = useState("");
   const [filterGothrams, setFilterGothrams] = useState<string[]>([]);
   const [filterHouseNames, setFilterHouseNames] = useState<string[]>([]);
+  const [filterGenders, setFilterGenders] = useState<string[]>([]);
   const [filterStates, setFilterStates] = useState<string[]>([]);
   const [filterCountries, setFilterCountries] = useState<string[]>([]);
   const { toast } = useToast();
@@ -541,10 +542,11 @@ export default function Admin() {
   });
 
   const filterOptions = useMemo(() => {
-    if (!groupedData) return { gothrams: [], houseNames: [], states: [], countries: [] };
+    if (!groupedData) return { gothrams: [], houseNames: [], genders: [], states: [], countries: [] };
     
     const gothrams = new Set<string>();
     const houseNames = new Set<string>();
+    const genders = new Set<string>();
     const states = new Set<string>();
     const countries = new Set<string>();
     
@@ -552,6 +554,7 @@ export default function Admin() {
       gothrams.add(group.gothram);
       group.submissions.forEach((sub) => {
         if (sub.houseName) houseNames.add(sub.houseName);
+        if (sub.gender) genders.add(sub.gender);
         if (sub.state) states.add(sub.state);
         if (sub.county) countries.add(sub.county);
       });
@@ -560,6 +563,7 @@ export default function Admin() {
     return {
       gothrams: Array.from(gothrams).sort(),
       houseNames: Array.from(houseNames).sort(),
+      genders: Array.from(genders).sort(),
       states: Array.from(states).sort(),
       countries: Array.from(countries).sort(),
     };
@@ -576,9 +580,10 @@ export default function Admin() {
           const matchesName = searchName === "" || 
             sub.name.toLowerCase().includes(searchName.toLowerCase());
           const matchesHouseName = filterHouseNames.length === 0 || filterHouseNames.includes(sub.houseName);
+          const matchesGender = filterGenders.length === 0 || (sub.gender && filterGenders.includes(sub.gender));
           const matchesState = filterStates.length === 0 || filterStates.includes(sub.state);
           const matchesCountry = filterCountries.length === 0 || filterCountries.includes(sub.county);
-          return matchesName && matchesHouseName && matchesState && matchesCountry;
+          return matchesName && matchesHouseName && matchesGender && matchesState && matchesCountry;
         }),
       }))
       .map((group) => ({
@@ -586,15 +591,16 @@ export default function Admin() {
         count: group.submissions.length,
       }))
       .filter((group) => group.submissions.length > 0);
-  }, [groupedData, searchName, filterGothrams, filterHouseNames, filterStates, filterCountries]);
+  }, [groupedData, searchName, filterGothrams, filterHouseNames, filterGenders, filterStates, filterCountries]);
 
   const hasActiveFilters = searchName !== "" || filterGothrams.length > 0 || 
-    filterHouseNames.length > 0 || filterStates.length > 0 || filterCountries.length > 0;
+    filterHouseNames.length > 0 || filterGenders.length > 0 || filterStates.length > 0 || filterCountries.length > 0;
 
   const clearFilters = () => {
     setSearchName("");
     setFilterGothrams([]);
     setFilterHouseNames([]);
+    setFilterGenders([]);
     setFilterStates([]);
     setFilterCountries([]);
   };
@@ -820,6 +826,17 @@ export default function Admin() {
                       selected={filterHouseNames}
                       onChange={setFilterHouseNames}
                       testId="select-filter-housename"
+                    />
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label>Gender</Label>
+                    <MultiSelect
+                      label="Genders"
+                      options={filterOptions.genders}
+                      selected={filterGenders}
+                      onChange={setFilterGenders}
+                      testId="select-filter-gender"
                     />
                   </div>
                   
