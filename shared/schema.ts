@@ -1,5 +1,5 @@
 import { sql } from "drizzle-orm";
-import { pgTable, text, varchar, timestamp, serial } from "drizzle-orm/pg-core";
+import { pgTable, text, varchar, timestamp, serial, date } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -61,12 +61,18 @@ export const GOTHRAM_OPTIONS = Object.keys(GOTHRAM_HOUSE_DATA).sort((a, b) =>
   a.toLowerCase().localeCompare(b.toLowerCase())
 );
 
+// Gender options
+export const GENDER_OPTIONS = ["Male", "Female"] as const;
+
 // User submissions table
 export const submissions = pgTable("submissions", {
   id: serial("id").primaryKey(),
   name: text("name").notNull(),
   phoneNumber: text("phone_number").notNull(),
   community: text("community").notNull().default("Desuru Reddy"),
+  gender: text("gender"),
+  dateOfBirth: date("date_of_birth"),
+  presentAddress: text("present_address"),
   gothram: text("gothram").notNull(),
   houseName: text("house_name").notNull(),
   otherGothram: text("other_gothram"),
@@ -86,6 +92,9 @@ export const insertSubmissionSchema = createInsertSchema(submissions).omit({
 }).extend({
   name: z.string().min(2, "Name must be at least 2 characters"),
   phoneNumber: z.string().min(10, "Phone number must be at least 10 digits"),
+  gender: z.enum(["Male", "Female"], { required_error: "Please select gender" }),
+  dateOfBirth: z.string().min(1, "Date of birth is required"),
+  presentAddress: z.string().min(5, "Present address is required"),
   gothram: z.string().min(1, "Please select a Gothram"),
   houseName: z.string().min(1, "Please select a House Name"),
   state: z.string().min(2, "State is required"),
