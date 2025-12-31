@@ -863,7 +863,7 @@ export default function Admin() {
                     variant="outline"
                     size="sm"
                     onClick={exportToPDF}
-                    className="gap-2"
+                    className="gap-2 bg-white dark:bg-card"
                     disabled={!groupedData || totalSubmissions === 0}
                     data-testid="button-export-pdf"
                   >
