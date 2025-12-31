@@ -94,7 +94,8 @@ function PendingApprovalCard({
             </div>
             <div className="text-sm text-muted-foreground space-y-1">
               <p><span className="font-medium">Phone:</span> {submission.phoneNumber}</p>
-              <p><span className="font-medium">Lineage:</span> {submission.lineage} {submission.otherLineage && `(${submission.otherLineage})`}</p>
+              <p><span className="font-medium">Gothram:</span> {submission.gothram} {submission.otherGothram && `(${submission.otherGothram})`}</p>
+              <p><span className="font-medium">House Name:</span> {submission.houseName} {submission.otherHouseName && `(${submission.otherHouseName})`}</p>
               <p><span className="font-medium">Location:</span> {submission.state}, {submission.county}</p>
             </div>
           </div>
@@ -224,14 +225,14 @@ function SubmissionGroup({ group }: { group: GroupedSubmissions }) {
           <CardHeader className="cursor-pointer hover-elevate">
             <div className="flex items-center justify-between gap-4">
               <div className="flex items-center gap-3 flex-wrap">
-                <CardTitle className="text-lg font-semibold" data-testid={`group-title-${group.lineage.toLowerCase().replace(/\s+/g, "-")}`}>
-                  {group.lineage}
+                <CardTitle className="text-lg font-semibold" data-testid={`group-title-${group.gothram.toLowerCase().replace(/\s+/g, "-")}`}>
+                  {group.gothram}
                 </CardTitle>
-                <Badge variant="secondary" className="text-xs" data-testid={`badge-count-${group.lineage.toLowerCase().replace(/\s+/g, "-")}`}>
+                <Badge variant="secondary" className="text-xs" data-testid={`badge-count-${group.gothram.toLowerCase().replace(/\s+/g, "-")}`}>
                   {group.count} {group.count === 1 ? "submission" : "submissions"}
                 </Badge>
               </div>
-              <Button variant="ghost" size="icon" data-testid={`button-toggle-${group.lineage.toLowerCase().replace(/\s+/g, "-")}`}>
+              <Button variant="ghost" size="icon" data-testid={`button-toggle-${group.gothram.toLowerCase().replace(/\s+/g, "-")}`}>
                 {isOpen ? (
                   <ChevronUp className="w-4 h-4" />
                 ) : (
@@ -255,10 +256,11 @@ function SubmissionGroup({ group }: { group: GroupedSubmissions }) {
                     <TableRow>
                       <TableHead className="text-xs font-medium uppercase tracking-wide">Name</TableHead>
                       <TableHead className="text-xs font-medium uppercase tracking-wide">Phone</TableHead>
+                      <TableHead className="text-xs font-medium uppercase tracking-wide">House Name</TableHead>
                       <TableHead className="text-xs font-medium uppercase tracking-wide">State</TableHead>
                       <TableHead className="text-xs font-medium uppercase tracking-wide">County</TableHead>
-                      {group.lineage === "Other" && (
-                        <TableHead className="text-xs font-medium uppercase tracking-wide">Lineage</TableHead>
+                      {group.gothram === "Other" && (
+                        <TableHead className="text-xs font-medium uppercase tracking-wide">Details</TableHead>
                       )}
                     </TableRow>
                   </TableHeader>
@@ -271,15 +273,19 @@ function SubmissionGroup({ group }: { group: GroupedSubmissions }) {
                         <TableCell data-testid={`cell-phone-${submission.id}`}>
                           {submission.phoneNumber}
                         </TableCell>
+                        <TableCell data-testid={`cell-housename-${submission.id}`}>
+                          {submission.houseName}
+                        </TableCell>
                         <TableCell data-testid={`cell-state-${submission.id}`}>
                           {submission.state}
                         </TableCell>
                         <TableCell data-testid={`cell-county-${submission.id}`}>
                           {submission.county}
                         </TableCell>
-                        {group.lineage === "Other" && (
+                        {group.gothram === "Other" && (
                           <TableCell data-testid={`cell-other-${submission.id}`}>
-                            {submission.otherLineage || "-"}
+                            {submission.otherGothram && `Gothram: ${submission.otherGothram}`}
+                            {submission.otherHouseName && `, House: ${submission.otherHouseName}`}
                           </TableCell>
                         )}
                       </TableRow>
@@ -442,7 +448,7 @@ function LoginForm({ onSuccess }: { onSuccess: () => void }) {
 export default function Admin() {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
   const [searchName, setSearchName] = useState("");
-  const [filterLineages, setFilterLineages] = useState<string[]>([]);
+  const [filterGothrams, setFilterGothrams] = useState<string[]>([]);
   const [filterStates, setFilterStates] = useState<string[]>([]);
   const [filterCountries, setFilterCountries] = useState<string[]>([]);
   const { toast } = useToast();
@@ -531,14 +537,14 @@ export default function Admin() {
   });
 
   const filterOptions = useMemo(() => {
-    if (!groupedData) return { lineages: [], states: [], countries: [] };
+    if (!groupedData) return { gothrams: [], states: [], countries: [] };
     
-    const lineages = new Set<string>();
+    const gothrams = new Set<string>();
     const states = new Set<string>();
     const countries = new Set<string>();
     
     groupedData.forEach((group) => {
-      lineages.add(group.lineage);
+      gothrams.add(group.gothram);
       group.submissions.forEach((sub) => {
         if (sub.state) states.add(sub.state);
         if (sub.county) countries.add(sub.county);
@@ -546,7 +552,7 @@ export default function Admin() {
     });
     
     return {
-      lineages: Array.from(lineages).sort(),
+      gothrams: Array.from(gothrams).sort(),
       states: Array.from(states).sort(),
       countries: Array.from(countries).sort(),
     };
@@ -556,7 +562,7 @@ export default function Admin() {
     if (!groupedData) return [];
     
     return groupedData
-      .filter((group) => filterLineages.length === 0 || filterLineages.includes(group.lineage))
+      .filter((group) => filterGothrams.length === 0 || filterGothrams.includes(group.gothram))
       .map((group) => ({
         ...group,
         submissions: group.submissions.filter((sub) => {
@@ -572,14 +578,14 @@ export default function Admin() {
         count: group.submissions.length,
       }))
       .filter((group) => group.submissions.length > 0);
-  }, [groupedData, searchName, filterLineages, filterStates, filterCountries]);
+  }, [groupedData, searchName, filterGothrams, filterStates, filterCountries]);
 
-  const hasActiveFilters = searchName !== "" || filterLineages.length > 0 || 
+  const hasActiveFilters = searchName !== "" || filterGothrams.length > 0 || 
     filterStates.length > 0 || filterCountries.length > 0;
 
   const clearFilters = () => {
     setSearchName("");
-    setFilterLineages([]);
+    setFilterGothrams([]);
     setFilterStates([]);
     setFilterCountries([]);
   };
@@ -605,7 +611,7 @@ export default function Admin() {
 
   const totalSubmissions =
     groupedData?.reduce((acc, group) => acc + group.count, 0) || 0;
-  const totalLineages = groupedData?.length || 0;
+  const totalGothrams = groupedData?.length || 0;
   const filteredSubmissions = filteredData.reduce((acc, group) => acc + group.count, 0);
 
   return (
@@ -689,8 +695,8 @@ export default function Admin() {
                 icon={FileText}
               />
               <StatCard
-                title="Lineages"
-                value={totalLineages}
+                title="Gothrams"
+                value={totalGothrams}
                 icon={LayoutDashboard}
               />
               <StatCard
@@ -737,13 +743,13 @@ export default function Admin() {
                   </div>
                   
                   <div className="space-y-2">
-                    <Label>Lineage</Label>
+                    <Label>Gothram</Label>
                     <MultiSelect
-                      label="Lineages"
-                      options={filterOptions.lineages}
-                      selected={filterLineages}
-                      onChange={setFilterLineages}
-                      testId="select-filter-lineage"
+                      label="Gothrams"
+                      options={filterOptions.gothrams}
+                      selected={filterGothrams}
+                      onChange={setFilterGothrams}
+                      testId="select-filter-gothram"
                     />
                   </div>
                   
@@ -775,7 +781,7 @@ export default function Admin() {
             <div className="space-y-4">
               <div className="flex items-center justify-between gap-4 flex-wrap">
                 <h2 className="text-xl font-semibold" data-testid="text-section-submissions">
-                  Submissions by Lineage
+                  Submissions by Gothram
                 </h2>
                 {hasActiveFilters && (
                   <Badge variant="secondary" data-testid="badge-filtered-count">
@@ -785,7 +791,7 @@ export default function Admin() {
               </div>
               {filteredData.length > 0 ? (
                 filteredData.map((group) => (
-                  <SubmissionGroup key={group.lineage} group={group} />
+                  <SubmissionGroup key={group.gothram} group={group} />
                 ))
               ) : (
                 <Card>

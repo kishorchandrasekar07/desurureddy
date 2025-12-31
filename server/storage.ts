@@ -14,12 +14,12 @@ export interface IStorage {
   getApprovedSubmissions(): Promise<Submission[]>;
   getPendingSubmissions(): Promise<Submission[]>;
   approveSubmission(id: number): Promise<Submission | null>;
-  getSubmissionsGroupedByLineage(): Promise<GroupedSubmissions[]>;
+  getSubmissionsGroupedByGothram(): Promise<GroupedSubmissions[]>;
 }
 
 export class DatabaseStorage implements IStorage {
   async createSubmission(insertSubmission: InsertSubmission): Promise<Submission> {
-    const status = insertSubmission.lineage === "Other" ? "pending" : "approved";
+    const status = insertSubmission.gothram === "Other" || insertSubmission.houseName === "Other" ? "pending" : "approved";
     const approvedAt = status === "approved" ? new Date() : null;
     
     const [submission] = await db
@@ -37,7 +37,7 @@ export class DatabaseStorage implements IStorage {
     return await db
       .select()
       .from(submissions)
-      .orderBy(asc(submissions.lineage), asc(submissions.name));
+      .orderBy(asc(submissions.gothram), asc(submissions.houseName), asc(submissions.name));
   }
 
   async getApprovedSubmissions(): Promise<Submission[]> {
@@ -45,7 +45,7 @@ export class DatabaseStorage implements IStorage {
       .select()
       .from(submissions)
       .where(eq(submissions.status, "approved"))
-      .orderBy(asc(submissions.lineage), asc(submissions.name));
+      .orderBy(asc(submissions.gothram), asc(submissions.houseName), asc(submissions.name));
   }
 
   async getPendingSubmissions(): Promise<Submission[]> {
@@ -53,7 +53,7 @@ export class DatabaseStorage implements IStorage {
       .select()
       .from(submissions)
       .where(eq(submissions.status, "pending"))
-      .orderBy(asc(submissions.lineage), asc(submissions.name));
+      .orderBy(asc(submissions.gothram), asc(submissions.houseName), asc(submissions.name));
   }
 
   async approveSubmission(id: number): Promise<Submission | null> {
@@ -68,25 +68,25 @@ export class DatabaseStorage implements IStorage {
     return submission || null;
   }
 
-  async getSubmissionsGroupedByLineage(): Promise<GroupedSubmissions[]> {
+  async getSubmissionsGroupedByGothram(): Promise<GroupedSubmissions[]> {
     const approvedSubmissions = await this.getApprovedSubmissions();
     
     const grouped = approvedSubmissions.reduce((acc, submission) => {
-      const lineage = submission.lineage;
-      if (!acc[lineage]) {
-        acc[lineage] = [];
+      const gothram = submission.gothram;
+      if (!acc[gothram]) {
+        acc[gothram] = [];
       }
-      acc[lineage].push(submission);
+      acc[gothram].push(submission);
       return acc;
     }, {} as Record<string, Submission[]>);
 
     return Object.entries(grouped)
-      .map(([lineage, items]) => ({
-        lineage,
+      .map(([gothram, items]) => ({
+        gothram,
         submissions: items,
         count: items.length,
       }))
-      .sort((a, b) => a.lineage.localeCompare(b.lineage));
+      .sort((a, b) => a.gothram.localeCompare(b.gothram));
   }
 }
 

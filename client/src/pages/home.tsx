@@ -1,16 +1,15 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation } from "@tanstack/react-query";
 import { Check, Loader2, Send, RotateCcw, ChevronsUpDown } from "lucide-react";
-import { insertSubmissionSchema, type InsertSubmission, LINEAGE_OPTIONS } from "@shared/schema";
+import { insertSubmissionSchema, type InsertSubmission, GOTHRAM_OPTIONS, GOTHRAM_HOUSE_DATA } from "@shared/schema";
 import { apiRequest } from "@/lib/queryClient";
 import landingImage from "@assets/image_1766928192688.png";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import {
   Command,
   CommandEmpty,
@@ -37,7 +36,8 @@ import { useToast } from "@/hooks/use-toast";
 
 export default function Home() {
   const [isSubmitted, setIsSubmitted] = useState(false);
-  const [lineageOpen, setLineageOpen] = useState(false);
+  const [gothramOpen, setGothramOpen] = useState(false);
+  const [houseNameOpen, setHouseNameOpen] = useState(false);
   const { toast } = useToast();
 
   const form = useForm<InsertSubmission>({
@@ -46,14 +46,23 @@ export default function Home() {
       name: "",
       phoneNumber: "",
       community: "Desuru Reddy",
-      lineage: "",
-      otherLineage: "",
+      gothram: "",
+      houseName: "",
+      otherGothram: "",
+      otherHouseName: "",
       state: "",
       county: "",
     },
   });
 
-  const selectedLineage = form.watch("lineage");
+  const selectedGothram = form.watch("gothram");
+
+  const houseNameOptions = useMemo(() => {
+    if (!selectedGothram || selectedGothram === "Other") {
+      return [];
+    }
+    return GOTHRAM_HOUSE_DATA[selectedGothram] || [];
+  }, [selectedGothram]);
 
   const submitMutation = useMutation({
     mutationFn: async (data: InsertSubmission) => {
@@ -73,8 +82,9 @@ export default function Home() {
   });
 
   const onSubmit = (data: InsertSubmission) => {
-    if (data.lineage !== "Other") {
-      data.otherLineage = undefined;
+    if (data.gothram !== "Other") {
+      data.otherGothram = undefined;
+      data.otherHouseName = undefined;
     }
     submitMutation.mutate(data);
   };
@@ -205,45 +215,46 @@ export default function Home() {
 
               <FormField
                 control={form.control}
-                name="lineage"
+                name="gothram"
                 render={({ field }) => (
                   <FormItem className="flex flex-col">
                     <FormLabel>
-                      Lineage (Vaaru) <span className="text-destructive">*</span>
+                      Gothram <span className="text-destructive">*</span>
                     </FormLabel>
-                    <Popover open={lineageOpen} onOpenChange={setLineageOpen}>
+                    <Popover open={gothramOpen} onOpenChange={setGothramOpen}>
                       <PopoverTrigger asChild>
                         <FormControl>
                           <Button
                             variant="outline"
                             role="combobox"
-                            aria-expanded={lineageOpen}
+                            aria-expanded={gothramOpen}
                             className={cn(
                               "w-full justify-between font-normal",
                               !field.value && "text-muted-foreground"
                             )}
-                            data-testid="select-lineage"
+                            data-testid="select-gothram"
                           >
-                            {field.value || "Search and select your lineage"}
+                            {field.value || "Search and select your Gothram"}
                             <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                           </Button>
                         </FormControl>
                       </PopoverTrigger>
                       <PopoverContent className="w-full p-0" align="start">
                         <Command>
-                          <CommandInput placeholder="Search lineage..." />
+                          <CommandInput placeholder="Search Gothram..." />
                           <CommandList>
-                            <CommandEmpty>No lineage found.</CommandEmpty>
+                            <CommandEmpty>No Gothram found.</CommandEmpty>
                             <CommandGroup>
-                              {LINEAGE_OPTIONS.map((option) => (
+                              {GOTHRAM_OPTIONS.map((option) => (
                                 <CommandItem
                                   key={option}
                                   value={option}
                                   onSelect={() => {
                                     field.onChange(option);
-                                    setLineageOpen(false);
+                                    form.setValue("houseName", "");
+                                    setGothramOpen(false);
                                   }}
-                                  data-testid={`option-lineage-${option.toLowerCase().replace(/\s+/g, "-")}`}
+                                  data-testid={`option-gothram-${option.toLowerCase().replace(/\s+/g, "-")}`}
                                 >
                                   <Check
                                     className={cn(
@@ -254,6 +265,24 @@ export default function Home() {
                                   {option}
                                 </CommandItem>
                               ))}
+                              <CommandItem
+                                key="other"
+                                value="Other"
+                                onSelect={() => {
+                                  field.onChange("Other");
+                                  form.setValue("houseName", "Other");
+                                  setGothramOpen(false);
+                                }}
+                                data-testid="option-gothram-other"
+                              >
+                                <Check
+                                  className={cn(
+                                    "mr-2 h-4 w-4",
+                                    field.value === "Other" ? "opacity-100" : "opacity-0"
+                                  )}
+                                />
+                                Other
+                              </CommandItem>
                             </CommandGroup>
                           </CommandList>
                         </Command>
@@ -264,20 +293,143 @@ export default function Home() {
                 )}
               />
 
-              {selectedLineage === "Other" && (
+              {selectedGothram && selectedGothram !== "Other" && (
                 <FormField
                   control={form.control}
-                  name="otherLineage"
+                  name="houseName"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-col animate-in slide-in-from-top-2 duration-200">
+                      <FormLabel>
+                        House Name <span className="text-destructive">*</span>
+                      </FormLabel>
+                      <Popover open={houseNameOpen} onOpenChange={setHouseNameOpen}>
+                        <PopoverTrigger asChild>
+                          <FormControl>
+                            <Button
+                              variant="outline"
+                              role="combobox"
+                              aria-expanded={houseNameOpen}
+                              className={cn(
+                                "w-full justify-between font-normal",
+                                !field.value && "text-muted-foreground"
+                              )}
+                              data-testid="select-housename"
+                            >
+                              {field.value || "Select your House Name"}
+                              <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                            </Button>
+                          </FormControl>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-full p-0" align="start">
+                          <Command>
+                            <CommandInput placeholder="Search House Name..." />
+                            <CommandList>
+                              <CommandEmpty>No House Name found.</CommandEmpty>
+                              <CommandGroup>
+                                {houseNameOptions.map((option) => (
+                                  <CommandItem
+                                    key={option}
+                                    value={option}
+                                    onSelect={() => {
+                                      field.onChange(option);
+                                      setHouseNameOpen(false);
+                                    }}
+                                    data-testid={`option-housename-${option.toLowerCase().replace(/\s+/g, "-")}`}
+                                  >
+                                    <Check
+                                      className={cn(
+                                        "mr-2 h-4 w-4",
+                                        field.value === option ? "opacity-100" : "opacity-0"
+                                      )}
+                                    />
+                                    {option}
+                                  </CommandItem>
+                                ))}
+                                <CommandItem
+                                  key="other-house"
+                                  value="Other"
+                                  onSelect={() => {
+                                    field.onChange("Other");
+                                    setHouseNameOpen(false);
+                                  }}
+                                  data-testid="option-housename-other"
+                                >
+                                  <Check
+                                    className={cn(
+                                      "mr-2 h-4 w-4",
+                                      field.value === "Other" ? "opacity-100" : "opacity-0"
+                                    )}
+                                  />
+                                  Other
+                                </CommandItem>
+                              </CommandGroup>
+                            </CommandList>
+                          </Command>
+                        </PopoverContent>
+                      </Popover>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              )}
+
+              {selectedGothram === "Other" && (
+                <div className="space-y-4 animate-in slide-in-from-top-2 duration-200">
+                  <FormField
+                    control={form.control}
+                    name="otherGothram"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>
+                          Please specify Gothram <span className="text-destructive">*</span>
+                        </FormLabel>
+                        <FormControl>
+                          <Input
+                            placeholder="Enter your Gothram"
+                            {...field}
+                            data-testid="input-other-gothram"
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="otherHouseName"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>
+                          Please specify House Name <span className="text-destructive">*</span>
+                        </FormLabel>
+                        <FormControl>
+                          <Input
+                            placeholder="Enter your House Name"
+                            {...field}
+                            data-testid="input-other-housename"
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+              )}
+
+              {form.watch("houseName") === "Other" && selectedGothram !== "Other" && (
+                <FormField
+                  control={form.control}
+                  name="otherHouseName"
                   render={({ field }) => (
                     <FormItem className="animate-in slide-in-from-top-2 duration-200">
                       <FormLabel>
-                        Please specify <span className="text-destructive">*</span>
+                        Please specify House Name <span className="text-destructive">*</span>
                       </FormLabel>
                       <FormControl>
                         <Input
-                          placeholder="Enter your lineage"
+                          placeholder="Enter your House Name"
                           {...field}
-                          data-testid="input-other-lineage"
+                          data-testid="input-other-housename-only"
                         />
                       </FormControl>
                       <FormMessage />

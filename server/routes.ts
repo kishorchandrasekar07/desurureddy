@@ -74,10 +74,10 @@ export async function registerRoutes(
     }
   });
 
-  // Get all submissions grouped by lineage (protected endpoint)
+  // Get all submissions grouped by gothram (protected endpoint)
   app.get("/api/submissions/grouped", isAdminAuthenticated, async (req, res) => {
     try {
-      const grouped = await storage.getSubmissionsGroupedByLineage();
+      const grouped = await storage.getSubmissionsGroupedByGothram();
       return res.json(grouped);
     } catch (error) {
       console.error("Error fetching grouped submissions:", error);
