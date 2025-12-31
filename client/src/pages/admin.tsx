@@ -18,7 +18,10 @@ import {
   Check,
   Clock,
   CheckCircle,
+  Download,
 } from "lucide-react";
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
 import type { GroupedSubmissions, Submission } from "@shared/schema";
 import { queryClient } from "@/lib/queryClient";
 import landingImage from "@assets/image_1766928192688.png";
@@ -449,6 +452,7 @@ export default function Admin() {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
   const [searchName, setSearchName] = useState("");
   const [filterGothrams, setFilterGothrams] = useState<string[]>([]);
+  const [filterHouseNames, setFilterHouseNames] = useState<string[]>([]);
   const [filterStates, setFilterStates] = useState<string[]>([]);
   const [filterCountries, setFilterCountries] = useState<string[]>([]);
   const { toast } = useToast();
@@ -537,15 +541,17 @@ export default function Admin() {
   });
 
   const filterOptions = useMemo(() => {
-    if (!groupedData) return { gothrams: [], states: [], countries: [] };
+    if (!groupedData) return { gothrams: [], houseNames: [], states: [], countries: [] };
     
     const gothrams = new Set<string>();
+    const houseNames = new Set<string>();
     const states = new Set<string>();
     const countries = new Set<string>();
     
     groupedData.forEach((group) => {
       gothrams.add(group.gothram);
       group.submissions.forEach((sub) => {
+        if (sub.houseName) houseNames.add(sub.houseName);
         if (sub.state) states.add(sub.state);
         if (sub.county) countries.add(sub.county);
       });
@@ -553,6 +559,7 @@ export default function Admin() {
     
     return {
       gothrams: Array.from(gothrams).sort(),
+      houseNames: Array.from(houseNames).sort(),
       states: Array.from(states).sort(),
       countries: Array.from(countries).sort(),
     };
@@ -568,9 +575,10 @@ export default function Admin() {
         submissions: group.submissions.filter((sub) => {
           const matchesName = searchName === "" || 
             sub.name.toLowerCase().includes(searchName.toLowerCase());
+          const matchesHouseName = filterHouseNames.length === 0 || filterHouseNames.includes(sub.houseName);
           const matchesState = filterStates.length === 0 || filterStates.includes(sub.state);
           const matchesCountry = filterCountries.length === 0 || filterCountries.includes(sub.county);
-          return matchesName && matchesState && matchesCountry;
+          return matchesName && matchesHouseName && matchesState && matchesCountry;
         }),
       }))
       .map((group) => ({
@@ -578,16 +586,67 @@ export default function Admin() {
         count: group.submissions.length,
       }))
       .filter((group) => group.submissions.length > 0);
-  }, [groupedData, searchName, filterGothrams, filterStates, filterCountries]);
+  }, [groupedData, searchName, filterGothrams, filterHouseNames, filterStates, filterCountries]);
 
   const hasActiveFilters = searchName !== "" || filterGothrams.length > 0 || 
-    filterStates.length > 0 || filterCountries.length > 0;
+    filterHouseNames.length > 0 || filterStates.length > 0 || filterCountries.length > 0;
 
   const clearFilters = () => {
     setSearchName("");
     setFilterGothrams([]);
+    setFilterHouseNames([]);
     setFilterStates([]);
     setFilterCountries([]);
+  };
+
+  const exportToPDF = () => {
+    const doc = new jsPDF();
+    const dataToExport = hasActiveFilters ? filteredData : groupedData || [];
+    
+    doc.setFontSize(18);
+    doc.text("Desuru Reddy Community - Submissions", 14, 22);
+    
+    doc.setFontSize(10);
+    doc.setTextColor(100);
+    doc.text(`Generated on: ${new Date().toLocaleDateString()}`, 14, 30);
+    if (hasActiveFilters) {
+      doc.text(`(Filtered data - ${filteredSubmissions} of ${totalSubmissions} records)`, 14, 36);
+    }
+    
+    const tableData: string[][] = [];
+    dataToExport.forEach((group) => {
+      group.submissions.forEach((sub) => {
+        const displayGothram = sub.gothram === "Other" && sub.otherGothram 
+          ? `Other (${sub.otherGothram})` 
+          : sub.gothram;
+        const displayHouseName = sub.houseName === "Other" && sub.otherHouseName 
+          ? `Other (${sub.otherHouseName})` 
+          : sub.houseName;
+        tableData.push([
+          sub.name,
+          sub.phoneNumber,
+          displayGothram,
+          displayHouseName,
+          sub.state,
+          sub.county,
+        ]);
+      });
+    });
+    
+    autoTable(doc, {
+      head: [["Name", "Phone", "Gothram", "House Name", "State", "County"]],
+      body: tableData,
+      startY: hasActiveFilters ? 42 : 36,
+      styles: { fontSize: 9 },
+      headStyles: { fillColor: [59, 130, 246] },
+    });
+    
+    doc.save(`desuru_reddy_submissions_${new Date().toISOString().split("T")[0]}.pdf`);
+    
+    toast({
+      title: "PDF Downloaded",
+      description: `Exported ${tableData.length} submissions to PDF.`,
+    });
   };
 
   if (isAuthenticated === null) {
@@ -726,7 +785,7 @@ export default function Admin() {
                 </div>
               </CardHeader>
               <CardContent>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="search-name">Search by Name</Label>
                     <div className="relative">
@@ -754,6 +813,17 @@ export default function Admin() {
                   </div>
                   
                   <div className="space-y-2">
+                    <Label>House Name</Label>
+                    <MultiSelect
+                      label="House Names"
+                      options={filterOptions.houseNames}
+                      selected={filterHouseNames}
+                      onChange={setFilterHouseNames}
+                      testId="select-filter-housename"
+                    />
+                  </div>
+                  
+                  <div className="space-y-2">
                     <Label>State</Label>
                     <MultiSelect
                       label="States"
@@ -765,13 +835,13 @@ export default function Admin() {
                   </div>
                   
                   <div className="space-y-2">
-                    <Label>Country</Label>
+                    <Label>County</Label>
                     <MultiSelect
-                      label="Countries"
+                      label="Counties"
                       options={filterOptions.countries}
                       selected={filterCountries}
                       onChange={setFilterCountries}
-                      testId="select-filter-country"
+                      testId="select-filter-county"
                     />
                   </div>
                 </div>
@@ -783,11 +853,24 @@ export default function Admin() {
                 <h2 className="text-xl font-semibold" data-testid="text-section-submissions">
                   Submissions by Gothram
                 </h2>
-                {hasActiveFilters && (
-                  <Badge variant="secondary" data-testid="badge-filtered-count">
-                    Showing {filteredSubmissions} of {totalSubmissions}
-                  </Badge>
-                )}
+                <div className="flex items-center gap-2 flex-wrap">
+                  {hasActiveFilters && (
+                    <Badge variant="secondary" data-testid="badge-filtered-count">
+                      Showing {filteredSubmissions} of {totalSubmissions}
+                    </Badge>
+                  )}
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={exportToPDF}
+                    className="gap-2"
+                    disabled={!groupedData || totalSubmissions === 0}
+                    data-testid="button-export-pdf"
+                  >
+                    <Download className="w-4 h-4" />
+                    Export PDF
+                  </Button>
+                </div>
               </div>
               {filteredData.length > 0 ? (
                 filteredData.map((group) => (
