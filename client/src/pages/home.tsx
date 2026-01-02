@@ -211,7 +211,7 @@ export default function Home() {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                      Community
+                      Community / சமூகம் / సంఘం
                     </FormLabel>
                     <FormControl>
                       <Input
