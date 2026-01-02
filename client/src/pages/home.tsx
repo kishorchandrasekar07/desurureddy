@@ -302,7 +302,7 @@ export default function Home() {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>
-                      Native Place <span className="text-destructive">*</span>
+                      Native Place / சொந்த இடம் / స్థానిక ప్రదేశం <span className="text-destructive">*</span>
                     </FormLabel>
                     <FormControl>
                       <Input
