@@ -170,7 +170,7 @@ export default function Home() {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>
-                      Name <span className="text-destructive">*</span>
+                      Name / பெயர் / పేరు <span className="text-destructive">*</span>
                     </FormLabel>
                     <FormControl>
                       <Input
@@ -190,7 +190,7 @@ export default function Home() {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>
-                      Phone Number <span className="text-destructive">*</span>
+                      Phone Number / ொலைபேசி எண் / టెలిఫోన్ నంబర్ <span className="text-destructive">*</span>
                     </FormLabel>
                     <FormControl>
                       <Input
@@ -232,7 +232,7 @@ export default function Home() {
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>
-                        Gender <span className="text-destructive">*</span>
+                        Gender / பாலினம் / లింగం <span className="text-destructive">*</span>
                       </FormLabel>
                       <Select onValueChange={field.onChange} value={field.value}>
                         <FormControl>
@@ -259,7 +259,7 @@ export default function Home() {
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>
-                        Date of Birth <span className="text-destructive">*</span>
+                        Date of Birth / பிறந்த தேதி / పుట్టిన తేదీ <span className="text-destructive">*</span>
                       </FormLabel>
                       <FormControl>
                         <Input
@@ -281,7 +281,7 @@ export default function Home() {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>
-                      Present Address <span className="text-destructive">*</span>
+                      Present Address / முகவரி / చిరునామా <span className="text-destructive">*</span>
                     </FormLabel>
                     <FormControl>
                       <Textarea
@@ -322,7 +322,7 @@ export default function Home() {
                 render={({ field }) => (
                   <FormItem className="flex flex-col">
                     <FormLabel>
-                      Gothram <span className="text-destructive">*</span>
+                      Gothram / கோத்திரம / గోత్రం <span className="text-destructive">*</span>
                     </FormLabel>
                     <Popover open={gothramOpen} onOpenChange={setGothramOpen}>
                       <PopoverTrigger asChild>
@@ -548,7 +548,7 @@ export default function Home() {
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>
-                        State <span className="text-destructive">*</span>
+                        State / மாநிலம் / రాష్ట్రం <span className="text-destructive">*</span>
                       </FormLabel>
                       <FormControl>
                         <Input
@@ -568,7 +568,7 @@ export default function Home() {
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>
-                        County <span className="text-destructive">*</span>
+                        County / நாடு / దేశం <span className="text-destructive">*</span>
                       </FormLabel>
                       <FormControl>
                         <Input
