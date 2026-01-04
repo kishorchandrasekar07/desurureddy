@@ -16,11 +16,11 @@ export default function Landing() {
       
       <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-transparent to-black/40" />
       
-      <div className="absolute top-4 right-4 z-20">
+      <div className="fixed top-4 right-4 z-30">
         <LanguageSwitcher />
       </div>
       
-      <div className="relative z-10 flex min-h-screen flex-col items-center justify-between px-4 py-8 sm:py-12 md:py-16">
+      <div className="relative z-10 flex min-h-screen flex-col items-center justify-between px-4 py-8 pt-24 sm:py-12 sm:pt-12 md:py-16">
         <div className="w-full max-w-4xl text-center">
           <div 
             className="flex flex-col items-center gap-1 text-2xl font-bold text-white drop-shadow-lg sm:text-3xl md:text-4xl lg:text-5xl"
