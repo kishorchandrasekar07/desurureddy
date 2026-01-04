@@ -19,7 +19,7 @@ export function LanguageSwitcher() {
   const currentLang = languages.find((l) => l.code === language);
 
   return (
-    <div className="flex items-center gap-2">
+    <div className="flex items-center gap-2 bg-background/90 backdrop-blur-sm px-3 py-2 rounded-md border">
       <span className="text-xs text-muted-foreground">
         Language / భాష / மொழி
       </span>
