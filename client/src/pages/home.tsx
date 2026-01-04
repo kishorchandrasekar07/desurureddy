@@ -5,6 +5,8 @@ import { useMutation } from "@tanstack/react-query";
 import { Check, Loader2, Send, RotateCcw, ChevronsUpDown } from "lucide-react";
 import { insertSubmissionSchema, type InsertSubmission, GOTHRAM_OPTIONS, GOTHRAM_HOUSE_DATA, GENDER_OPTIONS } from "@shared/schema";
 import { apiRequest } from "@/lib/queryClient";
+import { useTranslation } from "@/lib/i18n";
+import { LanguageSwitcher } from "@/components/language-switcher";
 import landingImage from "@assets/image_1766928192688.png";
 
 import { Button } from "@/components/ui/button";
@@ -47,6 +49,7 @@ export default function Home() {
   const [gothramOpen, setGothramOpen] = useState(false);
   const [houseNameOpen, setHouseNameOpen] = useState(false);
   const { toast } = useToast();
+  const { t } = useTranslation();
 
   const form = useForm<InsertSubmission>({
     resolver: zodResolver(insertSubmissionSchema),
@@ -114,7 +117,10 @@ export default function Home() {
           style={{ backgroundImage: `url(${landingImage})` }}
         />
         <div className="absolute inset-0 bg-black/30" />
-        <div className="relative z-10 flex min-h-screen items-center justify-center p-4">
+        <div className="absolute top-4 right-4 z-20">
+          <LanguageSwitcher />
+        </div>
+        <div className="relative z-10 flex min-h-screen items-center justify-center p-4 pt-20 sm:pt-4">
         <Card className="w-full max-w-2xl bg-background/95 backdrop-blur-sm">
           <CardContent className="pt-8 pb-8 text-center space-y-6">
             <div className="mx-auto w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center">
@@ -122,10 +128,10 @@ export default function Home() {
             </div>
             <div className="space-y-2">
               <h2 className="text-2xl font-semibold" data-testid="text-success-title">
-                Thanks for submitting
+                {t("successTitle")}
               </h2>
               <p className="text-muted-foreground" data-testid="text-success-message">
-                Your information has been recorded successfully.
+                {t("successMessage")}
               </p>
             </div>
             <Button
@@ -135,7 +141,7 @@ export default function Home() {
               data-testid="button-submit-another"
             >
               <RotateCcw className="w-4 h-4" />
-              Submit Another Response
+              {t("submitAnother")}
             </Button>
           </CardContent>
         </Card>
@@ -151,14 +157,17 @@ export default function Home() {
         style={{ backgroundImage: `url(${landingImage})` }}
       />
       <div className="absolute inset-0 bg-black/30" />
-      <div className="relative z-10 flex min-h-screen items-center justify-center p-4">
+      <div className="absolute top-4 right-4 z-20">
+        <LanguageSwitcher />
+      </div>
+      <div className="relative z-10 flex min-h-screen items-center justify-center p-4 pt-20 sm:pt-4">
       <Card className="w-full max-w-2xl bg-background/95 backdrop-blur-sm">
         <CardHeader className="space-y-1 pb-6">
           <CardTitle className="text-3xl font-semibold" data-testid="text-form-title">
-            Submit Your Information
+            {t("formTitle")}
           </CardTitle>
           <CardDescription data-testid="text-form-description">
-            Please fill out the form below to submit your details
+            {t("formDescription")}
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -174,7 +183,7 @@ export default function Home() {
                     </FormLabel>
                     <FormControl>
                       <Input
-                        placeholder="Enter your full name"
+                        placeholder={t("namePlaceholder")}
                         {...field}
                         data-testid="input-name"
                       />
@@ -194,7 +203,7 @@ export default function Home() {
                     </FormLabel>
                     <FormControl>
                       <Input
-                        placeholder="Enter your phone number"
+                        placeholder={t("phonePlaceholder")}
                         type="tel"
                         {...field}
                         data-testid="input-phone"
@@ -237,13 +246,13 @@ export default function Home() {
                       <Select onValueChange={field.onChange} value={field.value}>
                         <FormControl>
                           <SelectTrigger data-testid="select-gender">
-                            <SelectValue placeholder="Select gender" />
+                            <SelectValue placeholder={t("selectGender")} />
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
                           {GENDER_OPTIONS.map((option) => (
                             <SelectItem key={option} value={option} data-testid={`option-gender-${option.toLowerCase()}`}>
-                              {option}
+                              {option === "Male" ? t("male") : t("female")}
                             </SelectItem>
                           ))}
                         </SelectContent>
@@ -285,7 +294,7 @@ export default function Home() {
                     </FormLabel>
                     <FormControl>
                       <Textarea
-                        placeholder="Enter your present address"
+                        placeholder={t("addressPlaceholder")}
                         {...field}
                         rows={3}
                         data-testid="input-address"
@@ -306,7 +315,7 @@ export default function Home() {
                     </FormLabel>
                     <FormControl>
                       <Input
-                        placeholder="Enter your native place"
+                        placeholder={t("nativePlaceholder")}
                         {...field}
                         data-testid="input-native-place"
                       />
@@ -337,16 +346,16 @@ export default function Home() {
                             )}
                             data-testid="select-gothram"
                           >
-                            {field.value || "Search and select your Gothram"}
+                            {field.value || t("searchAndSelectGothram")}
                             <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                           </Button>
                         </FormControl>
                       </PopoverTrigger>
                       <PopoverContent className="w-full p-0" align="start">
                         <Command>
-                          <CommandInput placeholder="Search Gothram..." />
+                          <CommandInput placeholder={t("searchGothram")} />
                           <CommandList>
-                            <CommandEmpty>No Gothram found.</CommandEmpty>
+                            <CommandEmpty>{t("noGothramFound")}</CommandEmpty>
                             <CommandGroup>
                               {GOTHRAM_OPTIONS.map((option) => (
                                 <CommandItem
@@ -418,16 +427,16 @@ export default function Home() {
                               )}
                               data-testid="select-housename"
                             >
-                              {field.value || "Select your House Name"}
+                              {field.value || t("searchAndSelectHouseName")}
                               <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                             </Button>
                           </FormControl>
                         </PopoverTrigger>
                         <PopoverContent className="w-full p-0" align="start">
                           <Command>
-                            <CommandInput placeholder="Search House Name..." />
+                            <CommandInput placeholder={t("searchHouseName")} />
                             <CommandList>
-                              <CommandEmpty>No House Name found.</CommandEmpty>
+                              <CommandEmpty>{t("noHouseNameFound")}</CommandEmpty>
                               <CommandGroup>
                                 {houseNameOptions.map((option) => (
                                   <CommandItem
@@ -484,11 +493,11 @@ export default function Home() {
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>
-                          Please specify Gothram <span className="text-destructive">*</span>
+                          {t("pleaseSpecifyGothram")} <span className="text-destructive">*</span>
                         </FormLabel>
                         <FormControl>
                           <Input
-                            placeholder="Enter your Gothram"
+                            placeholder={t("otherGothramPlaceholder")}
                             {...field}
                             data-testid="input-other-gothram"
                           />
@@ -503,11 +512,11 @@ export default function Home() {
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>
-                          Please specify House Name <span className="text-destructive">*</span>
+                          {t("pleaseSpecifyHouseName")} <span className="text-destructive">*</span>
                         </FormLabel>
                         <FormControl>
                           <Input
-                            placeholder="Enter your House Name"
+                            placeholder={t("otherHouseNamePlaceholder")}
                             {...field}
                             data-testid="input-other-housename"
                           />
@@ -526,11 +535,11 @@ export default function Home() {
                   render={({ field }) => (
                     <FormItem className="animate-in slide-in-from-top-2 duration-200">
                       <FormLabel>
-                        Please specify House Name <span className="text-destructive">*</span>
+                        {t("pleaseSpecifyHouseName")} <span className="text-destructive">*</span>
                       </FormLabel>
                       <FormControl>
                         <Input
-                          placeholder="Enter your House Name"
+                          placeholder={t("otherHouseNamePlaceholder")}
                           {...field}
                           data-testid="input-other-housename-only"
                         />
@@ -552,7 +561,7 @@ export default function Home() {
                       </FormLabel>
                       <FormControl>
                         <Input
-                          placeholder="Enter state"
+                          placeholder={t("selectState")}
                           {...field}
                           data-testid="input-state"
                         />
@@ -572,7 +581,7 @@ export default function Home() {
                       </FormLabel>
                       <FormControl>
                         <Input
-                          placeholder="Enter county"
+                          placeholder={t("selectCounty")}
                           {...field}
                           data-testid="input-county"
                         />
@@ -592,12 +601,12 @@ export default function Home() {
                 {submitMutation.isPending ? (
                   <>
                     <Loader2 className="w-4 h-4 animate-spin" />
-                    Submitting...
+                    {t("submitting")}
                   </>
                 ) : (
                   <>
                     <Send className="w-4 h-4" />
-                    Submit
+                    {t("submit")}
                   </>
                 )}
               </Button>
