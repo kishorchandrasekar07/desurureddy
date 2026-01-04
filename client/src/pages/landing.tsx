@@ -16,7 +16,7 @@ export default function Landing() {
       
       <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-transparent to-black/40" />
       
-      <div className="fixed top-4 right-4 z-30">
+      <div className="absolute top-4 right-4 z-20">
         <LanguageSwitcher />
       </div>
       

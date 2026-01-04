@@ -117,10 +117,10 @@ export default function Home() {
           style={{ backgroundImage: `url(${landingImage})` }}
         />
         <div className="absolute inset-0 bg-black/30" />
-        <div className="relative z-10 flex min-h-screen items-center justify-center p-4 pt-20 sm:pt-4">
-        <div className="fixed top-4 right-4 z-30">
+        <div className="absolute top-4 right-4 z-20">
           <LanguageSwitcher />
         </div>
+        <div className="relative z-10 flex min-h-screen items-center justify-center p-4 pt-20 sm:pt-4">
         <Card className="w-full max-w-2xl bg-background/95 backdrop-blur-sm">
           <CardContent className="pt-8 pb-8 text-center space-y-6">
             <div className="mx-auto w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center">
@@ -157,10 +157,10 @@ export default function Home() {
         style={{ backgroundImage: `url(${landingImage})` }}
       />
       <div className="absolute inset-0 bg-black/30" />
-      <div className="relative z-10 flex min-h-screen items-center justify-center p-4 pt-20 sm:pt-4">
-      <div className="fixed top-4 right-4 z-30">
+      <div className="absolute top-4 right-4 z-20">
         <LanguageSwitcher />
       </div>
+      <div className="relative z-10 flex min-h-screen items-center justify-center p-4 pt-20 sm:pt-4">
       <Card className="w-full max-w-2xl bg-background/95 backdrop-blur-sm">
         <CardHeader className="space-y-1 pb-6">
           <CardTitle className="text-3xl font-semibold" data-testid="text-form-title">
