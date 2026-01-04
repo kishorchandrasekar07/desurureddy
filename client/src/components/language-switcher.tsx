@@ -19,18 +19,22 @@ export function LanguageSwitcher() {
   const currentLang = languages.find((l) => l.code === language);
 
   return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button 
-          variant="outline" 
-          size="sm" 
-          className="gap-2"
-          data-testid="button-language-switcher"
-        >
-          <Languages className="w-4 h-4" />
-          <span className="hidden sm:inline">{currentLang?.native}</span>
-        </Button>
-      </DropdownMenuTrigger>
+    <div className="flex items-center gap-2">
+      <span className="text-xs text-muted-foreground">
+        Language / భాష / மொழி
+      </span>
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button 
+            variant="outline" 
+            size="sm" 
+            className="gap-2"
+            data-testid="button-language-switcher"
+          >
+            <Languages className="w-4 h-4" />
+            <span>{currentLang?.native}</span>
+          </Button>
+        </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
         {languages.map((lang) => (
           <DropdownMenuItem
@@ -44,6 +48,7 @@ export function LanguageSwitcher() {
           </DropdownMenuItem>
         ))}
       </DropdownMenuContent>
-    </DropdownMenu>
+      </DropdownMenu>
+    </div>
   );
 }
