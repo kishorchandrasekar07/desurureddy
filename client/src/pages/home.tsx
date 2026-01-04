@@ -5,6 +5,8 @@ import { useMutation } from "@tanstack/react-query";
 import { Check, Loader2, Send, RotateCcw, ChevronsUpDown } from "lucide-react";
 import { insertSubmissionSchema, type InsertSubmission, GOTHRAM_OPTIONS, GOTHRAM_HOUSE_DATA, GENDER_OPTIONS } from "@shared/schema";
 import { apiRequest } from "@/lib/queryClient";
+import { useTranslation } from "@/lib/i18n";
+import { LanguageSwitcher } from "@/components/language-switcher";
 import landingImage from "@assets/image_1766928192688.png";
 
 import { Button } from "@/components/ui/button";
@@ -47,6 +49,7 @@ export default function Home() {
   const [gothramOpen, setGothramOpen] = useState(false);
   const [houseNameOpen, setHouseNameOpen] = useState(false);
   const { toast } = useToast();
+  const { t } = useTranslation();
 
   const form = useForm<InsertSubmission>({
     resolver: zodResolver(insertSubmissionSchema),
@@ -114,6 +117,9 @@ export default function Home() {
           style={{ backgroundImage: `url(${landingImage})` }}
         />
         <div className="absolute inset-0 bg-black/30" />
+        <div className="absolute top-4 right-4 z-20">
+          <LanguageSwitcher />
+        </div>
         <div className="relative z-10 flex min-h-screen items-center justify-center p-4">
         <Card className="w-full max-w-2xl bg-background/95 backdrop-blur-sm">
           <CardContent className="pt-8 pb-8 text-center space-y-6">
@@ -122,10 +128,10 @@ export default function Home() {
             </div>
             <div className="space-y-2">
               <h2 className="text-2xl font-semibold" data-testid="text-success-title">
-                Thanks for submitting
+                {t("successTitle")}
               </h2>
               <p className="text-muted-foreground" data-testid="text-success-message">
-                Your information has been recorded successfully.
+                {t("successMessage")}
               </p>
             </div>
             <Button
@@ -135,7 +141,7 @@ export default function Home() {
               data-testid="button-submit-another"
             >
               <RotateCcw className="w-4 h-4" />
-              Submit Another Response
+              {t("submitAnother")}
             </Button>
           </CardContent>
         </Card>
@@ -151,14 +157,17 @@ export default function Home() {
         style={{ backgroundImage: `url(${landingImage})` }}
       />
       <div className="absolute inset-0 bg-black/30" />
+      <div className="absolute top-4 right-4 z-20">
+        <LanguageSwitcher />
+      </div>
       <div className="relative z-10 flex min-h-screen items-center justify-center p-4">
       <Card className="w-full max-w-2xl bg-background/95 backdrop-blur-sm">
         <CardHeader className="space-y-1 pb-6">
           <CardTitle className="text-3xl font-semibold" data-testid="text-form-title">
-            Submit Your Information
+            {t("formTitle")}
           </CardTitle>
           <CardDescription data-testid="text-form-description">
-            Please fill out the form below to submit your details
+            {t("formDescription")}
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -592,12 +601,12 @@ export default function Home() {
                 {submitMutation.isPending ? (
                   <>
                     <Loader2 className="w-4 h-4 animate-spin" />
-                    Submitting...
+                    {t("submitting")}
                   </>
                 ) : (
                   <>
                     <Send className="w-4 h-4" />
-                    Submit
+                    {t("submit")}
                   </>
                 )}
               </Button>

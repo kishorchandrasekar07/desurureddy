@@ -2,6 +2,7 @@ import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { ArrowRight } from "lucide-react";
 import landingImage from "@assets/image_1766928192688.png";
+import { LanguageSwitcher } from "@/components/language-switcher";
 
 export default function Landing() {
   const [, setLocation] = useLocation();
@@ -14,6 +15,10 @@ export default function Landing() {
       />
       
       <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-transparent to-black/40" />
+      
+      <div className="absolute top-4 right-4 z-20">
+        <LanguageSwitcher />
+      </div>
       
       <div className="relative z-10 flex min-h-screen flex-col items-center justify-between px-4 py-8 sm:py-12 md:py-16">
         <div className="w-full max-w-4xl text-center">

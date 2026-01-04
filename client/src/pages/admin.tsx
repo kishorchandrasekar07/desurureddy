@@ -18,12 +18,15 @@ import {
   Check,
   Clock,
   CheckCircle,
+  XCircle,
   Download,
 } from "lucide-react";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import type { GroupedSubmissions, Submission } from "@shared/schema";
 import { queryClient } from "@/lib/queryClient";
+import { useTranslation } from "@/lib/i18n";
+import { LanguageSwitcher } from "@/components/language-switcher";
 import landingImage from "@assets/image_1766928192688.png";
 
 const ADMIN_TOKEN_KEY = "admin_token";
@@ -72,16 +75,31 @@ import {
 } from "@/components/ui/collapsible";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Checkbox } from "@/components/ui/checkbox";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { useToast } from "@/hooks/use-toast";
 
 function PendingApprovalCard({
   submission,
   onApprove,
+  onReject,
   isApproving,
+  isRejecting,
 }: {
   submission: Submission;
   onApprove: (id: number) => void;
+  onReject: (id: number) => void;
   isApproving: boolean;
+  isRejecting: boolean;
 }) {
   return (
     <Card className="border-amber-500/30 bg-amber-50/50 dark:bg-amber-950/20">
@@ -106,19 +124,56 @@ function PendingApprovalCard({
               <p><span className="font-medium">Location:</span> {submission.state}, {submission.county}</p>
             </div>
           </div>
-          <Button
-            onClick={() => onApprove(submission.id)}
-            disabled={isApproving}
-            className="gap-2 shrink-0"
-            data-testid={`button-approve-${submission.id}`}
-          >
-            {isApproving ? (
-              <Loader2 className="w-4 h-4 animate-spin" />
-            ) : (
-              <CheckCircle className="w-4 h-4" />
-            )}
-            Approve
-          </Button>
+          <div className="flex gap-2 shrink-0">
+            <Button
+              onClick={() => onApprove(submission.id)}
+              disabled={isApproving || isRejecting}
+              className="gap-2"
+              data-testid={`button-approve-${submission.id}`}
+            >
+              {isApproving ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : (
+                <CheckCircle className="w-4 h-4" />
+              )}
+              Approve
+            </Button>
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button
+                  variant="destructive"
+                  disabled={isApproving || isRejecting}
+                  className="gap-2"
+                  data-testid={`button-reject-${submission.id}`}
+                >
+                  {isRejecting ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : (
+                    <XCircle className="w-4 h-4" />
+                  )}
+                  Reject
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Confirm Rejection</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    Are you sure you want to reject this submission from <strong>{submission.name}</strong>? This action cannot be undone and the submission will be permanently deleted.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                  <AlertDialogAction
+                    onClick={() => onReject(submission.id)}
+                    className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                    data-testid={`button-confirm-reject-${submission.id}`}
+                  >
+                    Reject
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+          </div>
         </div>
       </CardContent>
     </Card>
@@ -535,6 +590,7 @@ export default function Admin() {
   });
 
   const [approvingId, setApprovingId] = useState<number | null>(null);
+  const [rejectingId, setRejectingId] = useState<number | null>(null);
 
   const approveMutation = useMutation({
     mutationFn: async (id: number) => {
@@ -559,6 +615,31 @@ export default function Admin() {
         variant: "destructive",
       });
       setApprovingId(null);
+    },
+  });
+
+  const rejectMutation = useMutation({
+    mutationFn: async (id: number) => {
+      setRejectingId(id);
+      const res = await adminFetch(`/api/submissions/${id}/reject`, { method: "POST" });
+      if (!res.ok) throw new Error("Failed to reject");
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/submissions/pending"] });
+      toast({
+        title: "Rejected",
+        description: "Submission has been rejected and removed.",
+      });
+      setRejectingId(null);
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "Failed to reject submission. Please try again.",
+        variant: "destructive",
+      });
+      setRejectingId(null);
     },
   });
 
@@ -722,17 +803,20 @@ export default function Admin() {
                 Admin Dashboard
               </h1>
             </div>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => logoutMutation.mutate()}
-              className="gap-2"
-              disabled={logoutMutation.isPending}
-              data-testid="button-logout"
-            >
-              <LogOut className="w-4 h-4" />
-              <span className="hidden sm:inline">Logout</span>
-            </Button>
+            <div className="flex items-center gap-2">
+              <LanguageSwitcher />
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => logoutMutation.mutate()}
+                className="gap-2"
+                disabled={logoutMutation.isPending}
+                data-testid="button-logout"
+              >
+                <LogOut className="w-4 h-4" />
+                <span className="hidden sm:inline">Logout</span>
+              </Button>
+            </div>
           </div>
         </div>
       </header>
@@ -772,7 +856,9 @@ export default function Admin() {
                       key={submission.id}
                       submission={submission}
                       onApprove={(id) => approveMutation.mutate(id)}
+                      onReject={(id) => rejectMutation.mutate(id)}
                       isApproving={approvingId === submission.id}
+                      isRejecting={rejectingId === submission.id}
                     />
                   ))}
                 </CardContent>

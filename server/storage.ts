@@ -14,6 +14,7 @@ export interface IStorage {
   getApprovedSubmissions(): Promise<Submission[]>;
   getPendingSubmissions(): Promise<Submission[]>;
   approveSubmission(id: number): Promise<Submission | null>;
+  rejectSubmission(id: number): Promise<boolean>;
   getSubmissionsGroupedByGothram(): Promise<GroupedSubmissions[]>;
 }
 
@@ -66,6 +67,14 @@ export class DatabaseStorage implements IStorage {
       .where(eq(submissions.id, id))
       .returning();
     return submission || null;
+  }
+
+  async rejectSubmission(id: number): Promise<boolean> {
+    const result = await db
+      .delete(submissions)
+      .where(eq(submissions.id, id))
+      .returning();
+    return result.length > 0;
   }
 
   async getSubmissionsGroupedByGothram(): Promise<GroupedSubmissions[]> {

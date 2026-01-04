@@ -127,5 +127,25 @@ export async function registerRoutes(
     }
   });
 
+  // Reject a submission (protected endpoint)
+  app.post("/api/submissions/:id/reject", isAdminAuthenticated, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id, 10);
+      if (isNaN(id)) {
+        return res.status(400).json({ message: "Invalid submission ID" });
+      }
+      
+      const rejected = await storage.rejectSubmission(id);
+      if (!rejected) {
+        return res.status(404).json({ message: "Submission not found" });
+      }
+      
+      return res.json({ success: true, message: "Submission rejected and deleted" });
+    } catch (error) {
+      console.error("Error rejecting submission:", error);
+      return res.status(500).json({ message: "Failed to reject submission" });
+    }
+  });
+
   return httpServer;
 }
