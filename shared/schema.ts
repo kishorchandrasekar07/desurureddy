@@ -30,7 +30,7 @@ export const GOTHRAM_HOUSE_DATA: Record<string, string[]> = {
   "Kolleepala": ["Bairam Reddy Varu", "Bandya Reddy Varu"],
   "Kotapala": ["Pelletti Varu"],
   "Kuchipala": ["Chenna Reddy Varu"],
-  "Kuvvam": ["Nagati Varu"],
+  "Kuvvam": ["Vakati Varu"],
   "Madamanuru": ["Nalla Reddy Varu", "Cheepa Reddy Varu", "Guduru Varu"],
   "Madhanabala": ["Kaaku Varu", "Rapooru Varu"],
   "Madhananthara": ["Vakati Varu", "Petta Varu", "Gengapuru Varu", "Gendavaram Varu"],
