@@ -17,6 +17,7 @@ export const GOTHRAM_HOUSE_DATA: Record<string, string[]> = {
   "Enabala": ["Kesa Reddy Varu"],
   "Ennumuru": ["Binna Reddy Varu"],
   "Eswaraka": ["Eepuru Varu", "Eswaraka Varu", "Padala Varu", "Nellipudi Varu", "Maramreddy Varu", "Sripathy Reddy Varu", "Rama Reddy Varu", "Papa Reddy Varu", "Deva Reddy Varu", "Parvatha Reddy Varu", "Pocha Reddy Varu", "Pethaa Reddy Varu"],
+  "Eswarapala": ["Parvatha Varu"],
   "Ethurupala": ["Krishna Reddy Varu", "Kattam Reddy Varu", "Patharthi Varu"],
   "Govindapala": ["Sanna Reddy Varu", "Dhuvvuru Varu"],
   "Gurukundhapala": ["Veguru Varu"],
